@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+DATE=$(which date)
+GDATE=$(which gdate)
+if [ -x "$GDATE" ]; then
+    DATE=$GDATE
+fi
+
+function LOG_INFO {
+    >&2 echo "$($DATE +"%F %T.%N") - [INFO ] - $*"
+}
+if [[ -z "${EASY_DIR}" ]]; then
+  LOG_INFO "EASY_DIR is not set!"
+  LOG_INFO "trying to detect it..."
+  export EASY_DIR=$(dirname $(realpath easy))
+  LOG_INFO "found EASY_DIR=${EASY_DIR}"
+fi
+if [[ ! -d "${EASY_DIR}" ]]; then
+  LOG_INFO "EASY_DIR is not valid!"
+  exit 1
+fi
+if [[ -z "${EASY_LETSENCRYPT_DIR}" ]]; then
+  LOG_INFO "EASY_LETSENCRYPT_DIR is not set!"
+  LOG_INFO "creating $HOME/.letsencrypt"
+  mkdir -p $HOME/.letsencrypt
+  export EASY_LETSENCRYPT_DIR=$HOME/.letsencrypt
+fi
+if [[ ! -d "${EASY_LETSENCRYPT_DIR}" ]]; then
+  LOG_INFO "EASY_LETSENCRYPT_DIR is not valid!"
+  exit 1
+fi
+D="${EASY_DIR}/commands"
+function __private_easy_usage {
+ LOG_INFO "Invalid command: $1"
+ LOG_INFO "Available commands are:"
+ cd $D
+ for f in *; do
+  printf '\t%s\n' "${f%.*}"
+ done
+}
+
+function easy {
+ C="$1"
+ # no command provided
+ if [[ -z "$C" ]]; then
+  __private_easy_usage $C
+  return 1
+ fi
+ # Check if it is a valid command
+ C_OK=""
+ # Look for ruby implementation first
+ C_RB="$D/$C.rb"
+ if [[ -f "$C_RB" ]]; then
+  C_OK="$C_RB"
+    ruby $C_RB $@
+    return $?
+ fi
+ # Look for python impl
+ C_PY="$D/$C.py"
+ if [[ -f "$C_PY" ]]; then
+  C_OK="$C_PY"
+    python $C_PY $@
+    return $?
+ fi
+ if [[ -z "$C_OK" ]]; then
+  # Look for shell implementation
+  C_SH="$D/$C.sh"
+  if [[ -f "$C_SH" ]]; then
+   C_OK="$C_SH"
+
+   source ${C_SH}
+
+   # Check whether the command
+   # exists as an internal
+   # function...
+   #
+   # NOTE: Internal commands use
+   # underscores rather than
+   # hyphens, hence the name
+   # conversion as the first
+   # step here.
+   C2=$(echo "$C" | tr '-' '_')
+
+   # Execute the requested command
+   if [ -n "$C_OK" ]; then
+    # It's available as
+    # a shell function
+    __easy_command_"$C2" $@
+    return $?
+   fi
+  fi
+ fi
+ # couldn't find the command
+ if [[ -z "$C_OK" ]]; then
+  __private_easy_usage $C
+  return 1
+ fi
+}
+
+easy $@

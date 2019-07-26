@@ -1,0 +1,9 @@
+#!/bin/bash
+/tmp/skeleton.py -t /tmp/domain.conf.tpl --domain $2 > /tmp/domain.$2.conf
+/tmp/skeleton.py \
+  -t /tmp/skeleton.tpl \
+  --server_name $1 \
+  --domain $2 \
+  --location_path / \
+  --location_target $3 \
+  > /tmp/domain.$1.conf
