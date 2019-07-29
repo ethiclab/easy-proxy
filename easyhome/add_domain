@@ -1,0 +1,4 @@
+#!/bin/bash
+/usr/local/share/easy/skeleton.py \
+  --domain $1 \
+  > /usr/local/share/easy/$1.conf

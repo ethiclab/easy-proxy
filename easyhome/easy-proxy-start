@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo nginx -c /usr/local/share/easy/nginx.conf -g 'daemon off;'

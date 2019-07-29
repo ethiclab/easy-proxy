@@ -1,4 +1,0 @@
-#!/bin/bash
-/tmp/skeleton.py \
-  --domain $1 \
-  > /tmp/$1.conf

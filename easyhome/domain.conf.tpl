@@ -3,11 +3,11 @@
     listen 80;
     error_page 404 /404.html;
     location = /404.html {
-      root /tmp/default;
+      root /usr/local/share/easy/default;
       internal;
     }
     location / {
-      root /tmp/dontexist;
+      root /usr/local/share/easy/dontexist;
     }
   }
   server {
@@ -15,10 +15,10 @@
     listen 80;
     error_page 404 /404.html;
     location = /404.html {
-      root /tmp/default;
+      root /usr/local/share/easy/default;
       internal;
     }
     location / {
-      root /tmp/dontexist;
+      root /usr/local/share/easy/dontexist;
     }
   }

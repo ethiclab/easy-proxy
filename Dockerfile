@@ -7,8 +7,9 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 && apt-get update \
 && apt-get install -y nginx python-certbot-nginx python-pip vim sudo \
 && pip install Cheetah3 \
-&& adduser www-data sudo \
+&& adduser www-data \
+&& adduser sudo \
 && echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 USER www-data
-VOLUME ["/etc/letsencrypt" "/tmp"]
-CMD ["/tmp/command.sh"]
+VOLUME ["/etc/letsencrypt" "/usr/local/share/easy"]
+CMD ["/usr/local/share/easy/easy-proxy-start"]

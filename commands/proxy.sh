@@ -1,6 +1,7 @@
 #!/bin/bash
 function __easy_command_proxy_help {
  echo "usage:"
+ echo "    easy proxy sh"
  echo "    easy proxy log"
  echo "    easy proxy build"
  echo "    easy proxy new"
@@ -49,7 +50,7 @@ function __easy_command_proxy {
    echo "Proxy is not running."
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" sudo nginx -c /tmp/nginx.conf -s reload
+  docker exec -it "${EASY_PROXY}" sudo nginx -c /usr/local/share/easy/nginx.conf -s reload
   return $?
  fi
  if [[ "build" == "$2" ]]; then
@@ -70,8 +71,16 @@ function __easy_command_proxy {
    echo "    easy proxy new myserver.mydomain.com mydomain.com http://someserver:someport"
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" /tmp/d $3 $4 $5
+  docker exec -it "${EASY_PROXY}" /usr/local/share/easy/d $3 $4 $5
   return $?
+ fi
+ if [[ "sh" == "$2" ]]; then
+  local EASY_PROXY=$(easy proxy status)
+  if [[ -z "${EASY_PROXY}" ]]; then
+   echo "Proxy is not running."
+   return 1
+  fi
+  docker exec -it "${EASY_PROXY}" bash
  fi
  if [[ "log" == "$2" ]]; then
   local EASY_PROXY=$(easy proxy status)
@@ -138,7 +147,7 @@ function __easy_command_proxy_default {
  fi
  docker run -d \
  -v ${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt \
- -v ${EASY_DIR}/tmp:/tmp \
+ -v ${EASY_DIR}/easyhome:/usr/local/share/easy \
  -p 80:80 \
  -p 443:443 \
  -t ethiclab/nginx    

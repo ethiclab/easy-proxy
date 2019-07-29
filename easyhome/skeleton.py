@@ -17,7 +17,7 @@ except ImportError:
     print >>sys.stderr, 'ERROR: requires argparse'
     sys.exit(1)
 
-CONFIG_FILE = "/tmp/skeleton.conf"
+CONFIG_FILE = "/usr/local/share/easy/skeleton.conf"
 
 def main(args):
     
