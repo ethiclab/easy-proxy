@@ -63,15 +63,22 @@ function __easy_command_proxy {
    echo "Proxy is not running."
    return 1
   fi
-  if [[ "$#" -ne 5 ]]; then
+  if [[ "$#" -ne 6 ]]; then
    echo "Too few arguments"
    echo "Usage:"
-   echo "    easy proxy new <fully qualified servername> <domain> <http target server>"
+   echo "    easy proxy new [http|https] <fully qualified servername> <domain> <http target server>"
    echo "For instance:"
-   echo "    easy proxy new myserver.mydomain.com mydomain.com http://someserver:someport"
+   echo "    easy proxy new http myserver.mydomain.com mydomain.com http://someserver:someport"
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" /usr/local/share/easy/d $3 $4 $5
+  if [[ "http" == "$3" ]]; then
+   docker exec -it "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_http $4 $5 $6
+  elif [[ "https" == "$3" ]]; then
+   docker exec -it "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_https $4 $5 $6
+  else
+   echo "Invalid protocol $3"
+   return 1
+  fi
   return $?
  fi
  if [[ "sh" == "$2" ]]; then
