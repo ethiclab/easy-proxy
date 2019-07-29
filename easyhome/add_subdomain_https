@@ -1,9 +1,10 @@
 #!/bin/bash
-/usr/local/share/easy/skeleton.py -t /usr/local/share/easy/domain.conf.tpl --domain $2 > /usr/local/share/easy/domain.$2.conf
+mkdir -p /usr/local/share/easy/domains/$2
+/usr/local/share/easy/skeleton.py -t /usr/local/share/easy/templates/https.default.conf --domain $2 > /usr/local/share/easy/domains/$2/https.default.conf
 /usr/local/share/easy/skeleton.py \
-  -t /usr/local/share/easy/domain.https.conf.tpl \
+  -t /usr/local/share/easy/templates/https.default.conf \
   --server_name $1 \
   --domain $2 \
   --location_path / \
   --location_target $3 \
-  > /usr/local/share/easy/domain.https.$1.conf
+  > /usr/local/share/easy/domains/$2/https.$1.conf
