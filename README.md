@@ -28,3 +28,9 @@ now visit: http://server1.example.com
   with user root and password password
   
 configure a new domain with wildcard support.
+
+## Mac OSX
+
+    networksetup -listallnetworkservices
+    networksetup -getdnsservers <networkservice>
+    networksetup -setdnsservers <networkservice> <dns1> [dns2] [...]
