@@ -20,14 +20,21 @@ if [[ ! -d "${EASY_DIR}" ]]; then
 fi
 if [[ -z "${EASY_LETSENCRYPT_DIR}" ]]; then
   LOG_INFO "EASY_LETSENCRYPT_DIR is not set!"
-  LOG_INFO "creating $HOME/.letsencrypt"
-  mkdir -p $HOME/.letsencrypt
   export EASY_LETSENCRYPT_DIR=$HOME/.letsencrypt
+  LOG_INFO "using ${EASY_LETSENCRYPT_DIR}"
 fi
+
+if [[ ! -d "${EASY_LETSENCRYPT_DIR}" ]]; then
+  LOG_INFO "${EASY_LETSENCRYPT_DIR} does not exist..."
+  LOG_INFO "creating ${EASY_LETSENCRYPT_DIR}"
+  mkdir -p "${EASY_LETSENCRYPT_DIR}"
+fi
+
 if [[ ! -d "${EASY_LETSENCRYPT_DIR}" ]]; then
   LOG_INFO "EASY_LETSENCRYPT_DIR is not valid!"
   exit 1
 fi
+
 D="${EASY_DIR}/commands"
 function __private_easy_usage {
  LOG_INFO "Invalid command: $1"
