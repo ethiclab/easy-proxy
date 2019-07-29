@@ -1,0 +1,9 @@
+#!/bin/bash
+/usr/local/share/easy/skeleton.py -t /usr/local/share/easy/domain.conf.tpl --domain $2 > /usr/local/share/easy/domain.$2.conf
+/usr/local/share/easy/skeleton.py \
+  -t /usr/local/share/easy/skeleton.tpl \
+  --server_name $1 \
+  --domain $2 \
+  --location_path / \
+  --location_target $3 \
+  > /usr/local/share/easy/domain.$1.conf
