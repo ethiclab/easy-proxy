@@ -54,7 +54,7 @@ function __easy_command_proxy {
   return $?
  fi
  if [[ "build" == "$2" ]]; then
-  docker build "${EASY_DIR}" -t ethiclab/nginx
+  docker build "${EASY_DIR}" -t ethiclab/nginx-easy
   return $?
  fi
  if [[ "new" == "$2" ]]; then
@@ -157,5 +157,5 @@ function __easy_command_proxy_default {
  -v ${EASY_DIR}/easyhome:/usr/local/share/easy \
  -p 80:80 \
  -p 443:443 \
- -t ethiclab/nginx    
+ -t ethiclab/nginx-easy
 }
