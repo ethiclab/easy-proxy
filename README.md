@@ -1,3 +1,17 @@
+# inspired by
+
+This project was initially loosly inspired by https://github.com/jwilder/nginx-proxy 
+
+# what
+
+The idea behind this project is to be able to provision web interfaces and expose them through a reverse proxy by using a CLI interface.
+
+If you are a network administrator within your company, or if you only need to setup a test environment, this proxy can be useful.
+
+For instance, let's say that you have a joomla server running on port 8888 somewhere in your network, for instance at address 192.168.1.123, and let's say that you have an http server running on port 80 in a server that is configured to be reached from internet by accessing the root domain example.com as well as the subdomains; for instance, a.example.com, b.example.com, etc.
+
+If you want to expose your joomla instance, you have to setup a reverse proxy within the exposed http server so that every request to myjoomla.example.com, for instance, is transparently forwarded to 192.168.1.123:8888
+
 # getting started
 
     export PATH=$(pwd):$PATH
