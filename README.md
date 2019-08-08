@@ -12,6 +12,12 @@ For instance, let's say that you have a joomla server running on port 8888 somew
 
 If you want to expose your joomla instance, you have to setup a reverse proxy within the exposed http server so that every request to myjoomla.example.com, for instance, is transparently forwarded to 192.168.1.123:8888
 
+In order to do that you have to manually edit nginx configuration or add a manually created file within the sites-available folder.
+
+Things get more complicated if you want to use SSL.
+
+This project tries to solve this by providing a CLI interface that allows you to provision a new subdomain site without editing any nginx configuration file manually.
+
 # getting started
 
     export PATH=$(pwd):$PATH
