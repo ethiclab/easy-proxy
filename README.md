@@ -3,6 +3,22 @@
     export PATH=$(pwd):$PATH
     easy
 
+# help
+
+    easy proxy help
+    usage:
+        easy proxy sh
+        easy proxy log
+        easy proxy build
+        easy proxy new
+        easy proxy status
+        easy proxy stop
+        easy proxy destroy
+        easy proxy restart
+        easy proxy reload
+        easy proxy certbot
+        easy proxy help
+
 # start nginx proxy (needs docker)
 
     easy proxy build
