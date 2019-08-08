@@ -68,9 +68,19 @@ For obtaining a list of possible commands that you can use with `easy proxy` you
 
 The undocumented command `easy proxy` starts the nginx proxy.
 
-# start nginx proxy (needs docker)
+If you obtain something like:
+
+    easy proxy
+    Unable to find image 'ethiclab/nginx-easy:latest' locally
+    docker: Error response from daemon: manifest for ethiclab/nginx-easy:latest not found.
+    See 'docker run --help'.
+    
+It means that you need to build the docker image first. Please execute the following command first:
 
     easy proxy build
+
+# start nginx proxy (needs docker)
+
     easy proxy
     docker network create network1
     docker run -d --name server1 nginx
