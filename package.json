@@ -1,0 +1,20 @@
+{
+  "name": "docker-nginx-http-proxy",
+  "version": "1.0.0",
+  "description": "This project was initially loosly inspired by https://github.com/jwilder/nginx-proxy",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethiclab/docker-nginx-http-proxy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ethiclab/docker-nginx-http-proxy/issues"
+  },
+  "homepage": "https://github.com/ethiclab/docker-nginx-http-proxy#readme"
+}
