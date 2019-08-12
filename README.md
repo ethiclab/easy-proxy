@@ -20,7 +20,7 @@ This project tries to solve this by providing a CLI interface that allows you to
 
 # getting started
 
-    export PATH=$(pwd):$PATH
+    npm install -g @ethiclab/easy-cli
     easy
 
 You should see and output like:

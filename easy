@@ -8,10 +8,14 @@ fi
 function LOG_INFO {
     >&2 echo "$($DATE +"%F %T.%N") - [INFO ] - $*"
 }
+if [[ -z "$(which easy)" ]]; then
+  LOG_INFO "easy is not installed!"
+  exit 1
+fi
 if [[ -z "${EASY_DIR}" ]]; then
   LOG_INFO "EASY_DIR is not set!"
   LOG_INFO "trying to detect it..."
-  export EASY_DIR=$(dirname $(realpath easy))
+  export EASY_DIR=$(dirname $(realpath $(which easy)))
   LOG_INFO "found EASY_DIR=${EASY_DIR}"
 fi
 if [[ ! -d "${EASY_DIR}" ]]; then
