@@ -8,42 +8,35 @@ fi
 function LOG_INFO {
     >&2 echo "$($DATE +"%F %T.%N") - [INFO ] - $*"
 }
+
 if [[ -z "$(which easy)" ]]; then
   LOG_INFO "easy is not installed!"
   exit 1
 fi
-if [[ -z "${EASY_DIR}" ]]; then
-  LOG_INFO "EASY_DIR is not set!"
-  LOG_INFO "trying to detect it..."
-  export EASY_DIR=$(dirname $(realpath $(which easy)))
-  LOG_INFO "found EASY_DIR=${EASY_DIR}"
-fi
+
+export EASY_DIR=$(dirname $(realpath $(which easy)))
+
 if [[ ! -d "${EASY_DIR}" ]]; then
-  LOG_INFO "EASY_DIR is not valid!"
+  LOG_INFO "EASY_DIR=${EASY_DIR} is not valid!"
   exit 1
 fi
+
+LOG_INFO "found EASY_DIR=${EASY_DIR}"
 
 function easy_verify_dir {
-if [[ -z "${EASY_LETSENCRYPT_DIR}" ]]; then
-  LOG_INFO "EASY_LETSENCRYPT_DIR is not set!"
-  export EASY_LETSENCRYPT_DIR=$HOME/.letsencrypt
-  LOG_INFO "using ${EASY_LETSENCRYPT_DIR}"
-fi
+  if [[ -z "$2" ]]; then
+    LOG_INFO "$1 is not set!"
+    exit 1
+  fi
 
-if [[ ! -d "${EASY_LETSENCRYPT_DIR}" ]]; then
-  LOG_INFO "${EASY_LETSENCRYPT_DIR} does not exist..."
-  LOG_INFO "creating ${EASY_LETSENCRYPT_DIR}"
-  mkdir -p "${EASY_LETSENCRYPT_DIR}"
-fi
-
-if [[ ! -d "${EASY_LETSENCRYPT_DIR}" ]]; then
-  LOG_INFO "EASY_LETSENCRYPT_DIR is not valid!"
-  exit 1
-fi
+  if [[ ! -d "$2" ]]; then
+    LOG_INFO "$2 does not exist or is not a directory..."
+    exit 1
+  fi
 }
 
-easy_verify_dir
-easy_verify_dir
+easy_verify_dir EASY_LETSENCRYPT_DIR $EASY_LETSENCRYPT_DIR
+easy_verify_dir EASY_DOMAINS_DIR $EASY_DOMAINS_DIR
 
 D="${EASY_DIR}/commands"
 function __private_easy_usage {

@@ -1,10 +1,10 @@
 #!/bin/bash
-mkdir -p /usr/local/share/easy/domains/$2
-/usr/local/share/easy/skeleton.py -t /usr/local/share/easy/templates/http.default.conf --domain $2 > /usr/local/share/easy/domains/$2/http.default.conf
+mkdir -p /domains/$2 || exit 1
+/usr/local/share/easy/skeleton.py -t /usr/local/share/easy/templates/http.default.conf --domain $2 > /domains/$2/http.default.conf
 /usr/local/share/easy/skeleton.py \
   -t /usr/local/share/easy/templates/http.conf \
   --server_name $1 \
   --domain $2 \
   --location_path / \
   --location_target $3 \
-  > /usr/local/share/easy/domains/$2/http.$1.conf
+  > /domains/$2/http.$1.conf
