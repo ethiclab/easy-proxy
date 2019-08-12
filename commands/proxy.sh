@@ -41,7 +41,7 @@ function __easy_command_proxy {
    echo "Invalid Domain."
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" sudo certbot --dry-run --email ${EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${DOMAIN},*.${DOMAIN}"
+  docker exec -it "${EASY_PROXY}" sudo certbot --email ${EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${DOMAIN},*.${DOMAIN}"
   return $?
  fi
  if [[ "reload" == "$2" ]]; then
