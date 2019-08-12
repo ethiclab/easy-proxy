@@ -22,6 +22,8 @@ if [[ ! -d "${EASY_DIR}" ]]; then
   LOG_INFO "EASY_DIR is not valid!"
   exit 1
 fi
+
+function easy_verify_dir {
 if [[ -z "${EASY_LETSENCRYPT_DIR}" ]]; then
   LOG_INFO "EASY_LETSENCRYPT_DIR is not set!"
   export EASY_LETSENCRYPT_DIR=$HOME/.letsencrypt
@@ -38,6 +40,10 @@ if [[ ! -d "${EASY_LETSENCRYPT_DIR}" ]]; then
   LOG_INFO "EASY_LETSENCRYPT_DIR is not valid!"
   exit 1
 fi
+}
+
+easy_verify_dir
+easy_verify_dir
 
 D="${EASY_DIR}/commands"
 function __private_easy_usage {
