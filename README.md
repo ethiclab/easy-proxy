@@ -27,7 +27,7 @@ You should see and output like:
 
     2019-08-08 12:43:01.303524194 - [INFO ] - EASY_DIR is not set!
     2019-08-08 12:43:01.305866455 - [INFO ] - trying to detect it...
-    2019-08-08 12:43:01.313189982 - [INFO ] - found EASY_DIR=/home/someuser/docker-nginx-http-proxy
+    2019-08-08 12:43:01.313189982 - [INFO ] - found EASY_DIR=/home/someuser/.nvm/versions/node/v10.16.2/lib/node_modules/@ethiclab/easy-cli
     2019-08-08 12:43:01.314281920 - [INFO ] - EASY_LETSENCRYPT_DIR is not set!
     2019-08-08 12:43:01.315325243 - [INFO ] - using /home/someuser/.letsencrypt
     2019-08-08 12:43:01.316717161 - [INFO ] - Invalid command: 
@@ -36,8 +36,7 @@ You should see and output like:
 
 To avoid seeing this all the time, just define the following environment variables into your profile file:
 
-    export EASY_DIR=/path_where_you_cloned_this_repo
-    export PATH=$PATH:$EASY_DIR
+    export EASY_DIR=/home/someuser/.nvm/versions/node/v10.16.2/lib/node_modules/@ethiclab/easy-cli
     export EASY_LETSENCRYPT_DIR=/some_persistent_backed_up_folder
 
 Then when you execute the `easy` command you get:
@@ -78,6 +77,13 @@ If you obtain something like:
 It means that you need to build the docker image first. Please execute the following command first:
 
     easy proxy build
+
+# create domains folder
+
+A `domains` folder has to be created under `$EASY_DIR/easyhome` and write access has to be enabled for `others`.
+
+    mkdir $EASY_DIR/easyhome/domains
+    chmod o+w $EASY_DIR/easyhome/domains
 
 # start nginx proxy (needs docker)
 
