@@ -153,6 +153,7 @@ function __easy_command_proxy_default {
   return 1
  fi
  docker run -d \
+ -v ${EASY_DOMAINS_DIR}:/domains \
  -v ${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt \
  -v ${EASY_DIR}/easyhome:/usr/local/share/easy \
  -p 80:80 \
