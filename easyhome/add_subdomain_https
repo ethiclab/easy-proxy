@@ -2,7 +2,7 @@
 mkdir -p /domains/$2 || exit 1
 /usr/local/share/easy/skeleton.py -t /usr/local/share/easy/templates/https.default.conf --domain $2 > /domains/$2/https.default.conf
 /usr/local/share/easy/skeleton.py \
-  -t /usr/local/share/easy/templates/https.default.conf \
+  -t /usr/local/share/easy/templates/https.conf \
   --server_name $1 \
   --domain $2 \
   --location_path / \
