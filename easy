@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 DATE=$(which date)
-GDATE=$(which gdate)
+GDATE=$(which gdate 2>/dev/null)
 if [ -x "$GDATE" ]; then
     DATE=$GDATE
 fi
