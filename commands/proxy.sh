@@ -11,6 +11,7 @@ function __easy_command_proxy_help {
  echo "    easy proxy restart"
  echo "    easy proxy reload"
  echo "    easy proxy certbot"
+ echo "    easy proxy rfc2136"
  echo "    easy proxy help"
 }
 
@@ -22,6 +23,33 @@ function __easy_command_proxy {
  if [[ "help" == "$2" ]]; then
    __easy_command_proxy_help
    return $?
+ fi
+ if [[ "rfc2136" == "$2" ]]; then
+  local EASY_PROXY=$(easy proxy status)
+  if [[ -z "${EASY_PROXY}" ]]; then
+   echo "Proxy is not running."
+   return 1
+  fi
+  local EMAIL
+  local DOMAIN
+  local CREDENTIAL_FILE
+  read -p 'Email: ' EMAIL
+  read -p 'Domain: ' DOMAIN
+  read -p 'Credential file: ' CREDENTIAL_FILE
+  if [[ -z "${EMAIL}" ]]; then
+   echo "Invalid Email."
+   return 1
+  fi
+  if [[ -z "${DOMAIN}" ]]; then
+   echo "Invalid Domain."
+   return 1
+  fi
+  if [[ ! -f "${CREDENTIAL_FILE}" ]]; then
+   echo "${CREDENTIAL_FILE} does not exist."
+   return 1
+  fi
+  docker exec -it "${EASY_PROXY}" sudo certbot --email ${EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --dns-rfc2136 --dns-rfc2136-credentials ${CREDENTIAL_FILE} --preferred-challenges dns -d "${DOMAIN},*.${DOMAIN}"
+  return $?
  fi
  if [[ "certbot" == "$2" ]]; then
   local EASY_PROXY=$(easy proxy status)
