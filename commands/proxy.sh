@@ -1,4 +1,34 @@
 #!/bin/bash
+
+#######################################################################################
+# BEGIN: utilities from https://github.com/montoyaedu/Trish/blob/master/test_tools.sh #
+#######################################################################################
+
+readonly CAT=$(which cat)
+
+function read_input {
+    "${CAT}" -
+}
+
+function debug {
+    $(>&2 echo $@)
+}
+
+function is {
+    local -r actual=$(read_input)
+    local -r expected="${@}"
+    if [ "${actual}" == "${expected}" ]; then
+        return 0
+    else
+        debug "expected '${expected}' but got '${actual}'"
+        return 1
+    fi
+}
+
+#####################################################################################
+# END: utilities from https://github.com/montoyaedu/Trish/blob/master/test_tools.sh #
+#####################################################################################
+
 function __easy_command_proxy_help {
  echo "usage:"
  echo "    easy proxy sh"
