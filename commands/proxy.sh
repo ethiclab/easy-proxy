@@ -30,25 +30,15 @@ function __easy_command_proxy {
    echo "Proxy is not running."
    return 1
   fi
-  local EMAIL
-  local DOMAIN
-  local CREDENTIAL_FILE
-  read -p 'Email: ' EMAIL
-  read -p 'Domain: ' DOMAIN
-  read -p 'Credential file: ' CREDENTIAL_FILE
-  if [[ -z "${EMAIL}" ]]; then
-   echo "Invalid Email."
+  if [[ -z "${EASY_LETSENCRYPT_EMAIL}" ]]; then
+   echo "Invalid Email. Set environment variable EASY_LETSENCRYPT_EMAIL"
    return 1
   fi
-  if [[ -z "${DOMAIN}" ]]; then
-   echo "Invalid Domain."
+  if [[ -z "${EASY_LETSENCRYPT_DOMAIN}" ]]; then
+   echo "Invalid Domain. Set environment variable EASY_LETSENCRYPT_DOMAIN"
    return 1
   fi
-  if [[ ! -f "${CREDENTIAL_FILE}" ]]; then
-   echo "${CREDENTIAL_FILE} does not exist."
-   return 1
-  fi
-  docker run --rm -it --name certfbot -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" certbot/dns-rfc2136 certonly --renew-by-default --dns-rfc2136-credentials /etc/letsencrypt/secret.txt --dns-rfc2136 -d "${DOMAIN},*.${DOMAIN}" --agree-tos
+  docker run --rm -it --name certfbot -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" certbot/dns-rfc2136 certonly --renew-by-default --dns-rfc2136-credentials /etc/letsencrypt/secret.txt --dns-rfc2136 -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}" --agree-tos
   return $?
  fi
  if [[ "certbot" == "$2" ]]; then
@@ -57,19 +47,15 @@ function __easy_command_proxy {
    echo "Proxy is not running."
    return 1
   fi
-  local EMAIL
-  local DOMAIN
-  read -p 'Email: ' EMAIL
-  read -p 'Domain: ' DOMAIN
-  if [[ -z "${EMAIL}" ]]; then
-   echo "Invalid Email."
+  if [[ -z "${EASY_LETSENCRYPT_EMAIL}" ]]; then
+   echo "Invalid Email. Set environment variable EASY_LETSENCRYPT_EMAIL"
    return 1
   fi
-  if [[ -z "${DOMAIN}" ]]; then
-   echo "Invalid Domain."
+  if [[ -z "${EASY_LETSENCRYPT_DOMAIN}" ]]; then
+   echo "Invalid Domain. Set environment variable EASY_LETSENCRYPT_DOMAIN"
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" sudo certbot --email ${EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${DOMAIN},*.${DOMAIN}"
+  docker exec -it "${EASY_PROXY}" sudo certbot --email ${EASY_LETSENCRYPT_EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}"
   return $?
  fi
  if [[ "reload" == "$2" ]]; then
