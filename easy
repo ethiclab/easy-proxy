@@ -21,8 +21,6 @@ if [[ ! -d "${EASY_DIR}" ]]; then
   exit 1
 fi
 
-LOG_INFO "found EASY_DIR=${EASY_DIR}"
-
 function easy_verify_dir {
   if [[ -z "$2" ]]; then
     LOG_INFO "$1 is not set!"

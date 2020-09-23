@@ -31,6 +31,7 @@ function is {
 
 function __easy_command_proxy_help {
  echo "usage:"
+ echo "    easy proxy create"
  echo "    easy proxy sh"
  echo "    easy proxy log"
  echo "    easy proxy build"
@@ -49,6 +50,10 @@ function __easy_command_proxy {
  if [[ -z "${EASY_DIR}" ]]; then
   echo "Invalid EASY_DIR"
   return 1
+ fi
+ if [[ "create" == "$2" ]]; then
+   __easy_command_proxy_create
+   return $?
  fi
  if [[ "help" == "$2" ]]; then
    __easy_command_proxy_help
@@ -173,8 +178,8 @@ function __easy_command_proxy {
  if [[ "status" == "$2" ]]; then
   for container in $(docker ps -q);
   do
-    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>&1 | is "443,80" && echo $container && return 0
-    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>&1 | is "80,443" && echo $container && return 0
+    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>/dev/null | is "443,80" 2>/dev/null && echo $container && return 0
+    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>/dev/null | is "80,443" 2>/dev/null && echo $container && return 0
   done
   return 1
  fi
@@ -187,10 +192,10 @@ function __easy_command_proxy {
  fi
 }
 
-function __easy_command_proxy_default {
+function __easy_command_proxy_create {
  local EASY_PROXY=$(easy proxy status)
  if [[ ! -z "${EASY_PROXY}" ]]; then
-  echo "There is another docker container running with port 80 bound. Proxy could be already running as ${EASY_PROXY}"
+  echo "There is another docker container running that exposes ports 80 and 443. Proxy could be already running as ${EASY_PROXY}"
   return 1
  fi
  if [[ -z "${EASY_LETSENCRYPT_DIR}" ]]; then
@@ -204,4 +209,9 @@ function __easy_command_proxy_default {
  -p 80:80 \
  -p 443:443 \
  -t ethiclab/nginx-easy
+}
+
+function __easy_command_proxy_default {
+  __easy_command_proxy_help
+  return 1
 }
