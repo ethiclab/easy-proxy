@@ -105,3 +105,12 @@ configure a new domain with wildcard support.
     networksetup -listallnetworkservices
     networksetup -getdnsservers <networkservice>
     networksetup -setdnsservers <networkservice> <dns1> [dns2] [...]
+    
+## How to publish npm package
+
+```
+npm login
+
+npm publish
+```
+
