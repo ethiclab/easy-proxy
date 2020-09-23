@@ -48,7 +48,7 @@ function __easy_command_proxy {
    echo "${CREDENTIAL_FILE} does not exist."
    return 1
   fi
-  docker run --rm -it --name certfbot -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" certbot/dns-rfc2136 certonly --dns-rfc2136 -d "${DOMAIN},*.${DOMAIN}" --agree-tos
+  docker run --rm -it --name certfbot -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" certbot/dns-rfc2136 certonly --renew-by-default --dns-rfc2136-credentials /etc/letsencrypt/secret.txt --dns-rfc2136 -d "${DOMAIN},*.${DOMAIN}" --agree-tos
   return $?
  fi
  if [[ "certbot" == "$2" ]]; then
