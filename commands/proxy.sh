@@ -4,7 +4,7 @@
 # BEGIN: utilities from https://github.com/montoyaedu/Trish/blob/master/test_tools.sh #
 #######################################################################################
 
-readonly CAT=$(which cat)
+CAT=$(which cat)
 
 function read_input {
     "${CAT}" -
@@ -171,11 +171,12 @@ function __easy_command_proxy {
   return $?
  fi
  if [[ "status" == "$2" ]]; then
-  local TMP=$(for container in $(docker ps -q); do docker container port $container | cut -d ":" -f 2 | is 80 1>/dev/null 2>/dev/null && echo $container; done)
-  if [[ ! -z "${TMP}" ]]; then
-   echo "${TMP}"
-  fi 
-  return 0
+  for container in $(docker ps -q);
+  do
+    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>&1 | is "443,80" && echo $container && return 0
+    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>&1 | is "80,443" && echo $container && return 0
+  done
+  return 1
  fi
  if [[ -z "$2" ]]; then
   __easy_command_proxy_default

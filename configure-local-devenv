@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+export EASY_HOME=$(pwd)
+export PATH=$EASY_HOME:$PATH
