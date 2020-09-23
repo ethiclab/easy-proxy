@@ -141,7 +141,7 @@ function __easy_command_proxy {
   return $?
  fi
  if [[ "status" == "$2" ]]; then
-  local TMP=$(for container in $(docker ps -q); do docker container port $container 80/tcp 1>/dev/null 2>/dev/null && echo $container; done)
+  local TMP=$(for container in $(docker ps -q); do docker container port $container | cut -d ":" -f 2 | is 80 1>/dev/null 2>/dev/null && echo $container; done)
   if [[ ! -z "${TMP}" ]]; then
    echo "${TMP}"
   fi 
