@@ -99,7 +99,7 @@ function __easy_command_proxy {
    echo "Proxy is not running."
    return 1
   fi
-  docker exec -i "${EASY_PROXY}" sudo nginx -c /usr/local/share/easy/nginx.conf -s reload
+  docker exec -it "${EASY_PROXY}" sudo nginx -c /usr/local/share/easy/nginx.conf -s reload
   return $?
  fi
  if [[ "build" == "$2" ]]; then
