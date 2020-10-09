@@ -73,7 +73,7 @@ function __easy_command_proxy {
    echo "Invalid Domain. Set environment variable EASY_LETSENCRYPT_DOMAIN"
    return 1
   fi
-  docker run --rm -it --name certfbot -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" certbot/dns-rfc2136 certonly --renew-by-default --dns-rfc2136-credentials /etc/letsencrypt/secret.txt --dns-rfc2136 -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}" --agree-tos
+  docker run --rm -i --name certfbot -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" certbot/dns-rfc2136 certonly --renew-by-default --dns-rfc2136-credentials /etc/letsencrypt/secret.txt --dns-rfc2136 -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}" --agree-tos
   return $?
  fi
  if [[ "certbot" == "$2" ]]; then
@@ -99,7 +99,7 @@ function __easy_command_proxy {
    echo "Proxy is not running."
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" sudo nginx -c /usr/local/share/easy/nginx.conf -s reload
+  docker exec -i "${EASY_PROXY}" sudo nginx -c /usr/local/share/easy/nginx.conf -s reload
   return $?
  fi
  if [[ "build" == "$2" ]]; then
