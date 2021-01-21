@@ -1,6 +1,6 @@
 # inspired by
 
-This project was initially loosly inspired by https://github.com/jwilder/nginx-proxy 
+This project was initially loosely inspired by https://github.com/jwilder/nginx-proxy 
 
 # what
 
