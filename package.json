@@ -20,8 +20,5 @@
     "url": "https://github.com/ethiclab/docker-nginx-http-proxy/issues"
   },
   "homepage": "https://github.com/ethiclab/docker-nginx-http-proxy#readme",
-  "dependencies": {
-    "global-modules": "^2.0.0",
-    "kind-of": "^6.0.3"
-  }
+  "dependencies": {}
 }
