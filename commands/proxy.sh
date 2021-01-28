@@ -36,7 +36,9 @@ function __easy_command_proxy_help {
  echo "    easy proxy log"
  echo "    easy proxy build"
  echo "    easy proxy new"
+ echo "    easy proxy id"
  echo "    easy proxy status"
+ echo "    easy proxy start"
  echo "    easy proxy stop"
  echo "    easy proxy destroy"
  echo "    easy proxy restart"
@@ -60,11 +62,6 @@ function __easy_command_proxy {
    return $?
  fi
  if [[ "rfc2136" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
-  if [[ -z "${EASY_PROXY}" ]]; then
-   echo "Proxy is not running."
-   return 1
-  fi
   if [[ -z "${EASY_LETSENCRYPT_EMAIL}" ]]; then
    echo "Invalid Email. Set environment variable EASY_LETSENCRYPT_EMAIL"
    return 1
@@ -131,57 +128,44 @@ function __easy_command_proxy {
   return $?
  fi
  if [[ "sh" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
-  if [[ -z "${EASY_PROXY}" ]]; then
-   echo "Proxy is not running."
-   return 1
-  fi
+  local EASY_PROXY=$(easy proxy id)
   docker exec -it "${EASY_PROXY}" bash
+  return $?
  fi
  if [[ "log" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
-  if [[ -z "${EASY_PROXY}" ]]; then
-   echo "Proxy is not running."
-   return 1
-  fi
+  local EASY_PROXY=$(easy proxy id)
   docker logs -f "${EASY_PROXY}" 
   return $?
  fi
  if [[ "destroy" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
-  if [[ -z "${EASY_PROXY}" ]]; then
-   echo "Proxy is not running."
-   return 1
-  fi
-  docker stop "${EASY_PROXY}" 
-  docker rm "${EASY_PROXY}" 
+  local EASY_PROXY=$(easy proxy id)
+  docker stop "${EASY_PROXY}"
+  docker rm "${EASY_PROXY}"
+  rm $EASY_DIR/.id
+  return $?
+ fi
+ if [[ "start" == "$2" ]]; then
+  local EASY_PROXY=$(easy proxy id)
+  docker start "${EASY_PROXY}" 
   return $?
  fi
  if [[ "stop" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
-  if [[ -z "${EASY_PROXY}" ]]; then
-   echo "Proxy is not running."
-   return 1
-  fi
+  local EASY_PROXY=$(easy proxy id)
   docker stop "${EASY_PROXY}" 
   return $?
  fi
  if [[ "restart" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
-  if [[ -z "${EASY_PROXY}" ]]; then
-   echo "Proxy is not running."
-   return 1
-  fi
+  local EASY_PROXY=$(easy proxy id)
   docker restart "${EASY_PROXY}" 
   return $?
  fi
+ if [[ "id" == "$2" ]]; then
+  [[ -f $EASY_DIR/.id ]] && cat $EASY_DIR/.id
+  return $?
+ fi
  if [[ "status" == "$2" ]]; then
-  for container in $(docker ps -q);
-  do
-    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>/dev/null | is "443,80" 2>/dev/null && echo $container && return 0
-    docker container port $container | cut -d ":" -f 2 | paste -sd "," - 2>/dev/null | is "80,443" 2>/dev/null && echo $container && return 0
-  done
-  return 1
+  [[ -f $EASY_DIR/.id ]] && easy proxy id >/dev/null && docker ps -q -f id=$(easy proxy id)
+  return $?
  fi
  if [[ -z "$2" ]]; then
   __easy_command_proxy_default
@@ -193,22 +177,26 @@ function __easy_command_proxy {
 }
 
 function __easy_command_proxy_create {
- local EASY_PROXY=$(easy proxy status)
+ local EASY_PROXY=$(easy proxy id)
  if [[ ! -z "${EASY_PROXY}" ]]; then
-  echo "There is another docker container running that exposes ports 80 and 443. Proxy could be already running as ${EASY_PROXY}"
+  echo "There is already an easy proxy instance with docker id ${EASY_PROXY}"
   return 1
  fi
  if [[ -z "${EASY_LETSENCRYPT_DIR}" ]]; then
   echo "Invalid EASY_LETSENCRYPT_DIR"
   return 1
  fi
- docker run -d \
+ local CONTAINER_ID=$(docker run -d \
  -v ${EASY_DOMAINS_DIR}:/domains \
  -v ${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt \
  -v ${EASY_DIR}/easyhome:/usr/local/share/easy \
  -p 80:80 \
  -p 443:443 \
- -t ethiclab/nginx-easy
+ -t ethiclab/nginx-easy)
+ if [[ "$?" == "0" ]]; then
+   echo $CONTAINER_ID > $EASY_DIR/.id
+ fi
+ easy proxy id
 }
 
 function __easy_command_proxy_default {

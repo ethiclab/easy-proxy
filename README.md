@@ -46,21 +46,25 @@ For obtaining a list of possible commands that you can use with `easy proxy` you
 
     easy proxy help
     usage:
+        easy proxy create
         easy proxy sh
         easy proxy log
         easy proxy build
         easy proxy new
+        easy proxy id
         easy proxy status
+        easy proxy start
         easy proxy stop
         easy proxy destroy
         easy proxy restart
         easy proxy reload
         easy proxy certbot
+        easy proxy rfc2136
         easy proxy help
 
-# easy proxy
+# easy proxy create
 
-The undocumented command `easy proxy` starts the nginx proxy.
+The command `easy proxy create` creates and starts the nginx proxy.
 
 If you obtain something like:
 
