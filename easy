@@ -39,14 +39,26 @@ easy_verify_dir EASY_DOMAINS_DIR $EASY_DOMAINS_DIR
 D="${EASY_DIR}/commands"
 function __private_easy_usage {
  LOG_INFO "Invalid command: $1"
+ LOG_INFO "Available switches are:"
+ >&2 printf '\t%s\n' "--version" 
  LOG_INFO "Available commands are:"
  cd $D
  for f in *; do
-  printf '\t%s\n' "${f%.*}"
+  >&2 printf '\t%s\n' "${f%.*}"
  done
 }
 
+function __private_easy_version {
+ cat ${EASY_DIR}/package.json \
+ | grep \"version\"\: \
+ | cut -d ',' -f 1 \
+ | cut -d ':' -f 2 \
+ | cut -d ' ' -f 2 \
+ | cut -d '"' -f 2
+}
+
 function easy {
+ [[ "--version" == "$1" ]] && __private_easy_version && return 0
  C="$1"
  # no command provided
  if [[ -z "$C" ]]; then

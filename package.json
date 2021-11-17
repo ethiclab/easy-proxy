@@ -1,6 +1,6 @@
 {
   "name": "@ethiclab/easy-cli",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "This project was initially based on https://github.com/jwilder/nginx-proxy",
   "main": "index.js",
   "scripts": {

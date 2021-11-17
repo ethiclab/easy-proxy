@@ -93,6 +93,12 @@ IMPORTANT: Remember that server1.example.com must resolve to the ip address wher
 
 # development
 
+## link easy with your local working folder
+
+    git clone git@github.com:ethiclab/docker-nginx-http-proxy.git
+    cd docker-nginx-http-proxy
+    . ./configure-local-devenv
+
 ## start a local dns
 
     docker run -d -p 53:53/tcp -p 53:53/udp -p10000:10000/tcp sameersbn/bind
