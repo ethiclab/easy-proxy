@@ -1,7 +1,7 @@
 {
   "name": "@ethiclab/easy-cli",
-  "version": "1.0.24",
-  "description": "This project was initially based on https://github.com/jwilder/nginx-proxy",
+  "version": "2.0.0",
+  "description": "Nginx reverse proxy with Let's Encrypt SSL automation, multi-DNS provider support (IONOS, Route53, Cloudflare, DigitalOcean)",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,16 +9,29 @@
   "bin": {
     "easy": "./easy"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ethiclab/docker-nginx-http-proxy.git"
+    "url": "git+https://github.com/ethiclab/easy-proxy.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nginx",
+    "ssl",
+    "letsencrypt",
+    "docker",
+    "dns-01",
+    "ionos",
+    "certbot"
+  ],
+  "author": "EthicLab <dev@ethiclab.it>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ethiclab/docker-nginx-http-proxy/issues"
+    "url": "https://github.com/ethiclab/easy-proxy/issues"
   },
-  "homepage": "https://github.com/ethiclab/docker-nginx-http-proxy#readme",
-  "dependencies": {}
+  "homepage": "https://github.com/ethiclab/easy-proxy#readme",
+  "dependencies": {
+    "yargs": "^17.7.2"
+  }
 }
