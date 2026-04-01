@@ -44,6 +44,7 @@ function __easy_command_proxy_help {
  echo "    easy proxy restart"
  echo "    easy proxy reload"
  echo "    easy proxy certbot"
+ echo "    easy proxy certbot-ionos <domain>"
  echo "    easy proxy rfc2136"
  echo "    easy proxy help"
 }
@@ -88,6 +89,64 @@ function __easy_command_proxy {
    return 1
   fi
   docker exec -it "${EASY_PROXY}" sudo certbot --email ${EASY_LETSENCRYPT_EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}"
+  return $?
+ fi
+ if [[ "certbot-ionos" == "$2" ]]; then
+  local EASY_PROXY=$(easy proxy status)
+  if [[ -z "${EASY_PROXY}" ]]; then
+   echo "Proxy is not running."
+   return 1
+  fi
+  if [[ -z "${EASY_LETSENCRYPT_EMAIL}" ]]; then
+   echo "Invalid Email. Set environment variable EASY_LETSENCRYPT_EMAIL"
+   return 1
+  fi
+  if [[ -z "$3" ]]; then
+   echo "Domain required: easy proxy certbot-ionos <domain>"
+   echo "Example: easy proxy certbot-ionos ethiclab.it"
+   return 1
+  fi
+
+  local domain="$3"
+  local api_key="${IONOS_API_KEY}"
+  local api_secret="${IONOS_API_SECRET}"
+
+  # Try to load from pass if credentials not in env
+  if [[ -z "${api_key}" ]] && command -v pass &> /dev/null; then
+   if pass ionos/api-key &> /dev/null; then
+    api_key=$(pass ionos/api-key)
+   fi
+  fi
+  if [[ -z "${api_secret}" ]] && command -v pass &> /dev/null; then
+   if pass ionos/api-secret &> /dev/null; then
+    api_secret=$(pass ionos/api-secret)
+   fi
+  fi
+
+  if [[ -z "${api_key}" ]] || [[ -z "${api_secret}" ]]; then
+   echo "ERROR: IONOS API credentials not found"
+   echo "Set via environment: IONOS_API_KEY=xxx IONOS_API_SECRET=yyy"
+   echo "Or use pass CLI: pass insert ionos/api-key && pass insert ionos/api-secret"
+   return 1
+  fi
+
+  # Create credentials file in container
+  docker exec "${EASY_PROXY}" /bin/sh -c "cat > /etc/letsencrypt/ionos.ini <<'EOF'
+dns_ionos_api_key = ${api_key}
+dns_ionos_api_secret = ${api_secret}
+EOF
+chmod 600 /etc/letsencrypt/ionos.ini"
+
+  # Generate certificate via DNS-01 challenge with IONOS plugin
+  echo "Generating certificate for ${domain} and *.${domain} via IONOS DNS..."
+  docker exec -it "${EASY_PROXY}" certbot certonly \
+   --non-interactive \
+   --agree-tos \
+   --email "${EASY_LETSENCRYPT_EMAIL}" \
+   --dns-ionos \
+   --dns-ionos-credentials /etc/letsencrypt/ionos.ini \
+   -d "${domain}" -d "*.${domain}"
+
   return $?
  fi
  if [[ "reload" == "$2" ]]; then
