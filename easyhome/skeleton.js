@@ -2,108 +2,43 @@
 
 /**
  * skeleton.js — Template renderer for easy-proxy nginx configurations
- * Replaces skeleton.py (Python 2 → Node.js)
+ * Replaces skeleton.py (Python 2 → Node.js, zero dependencies)
  *
  * Usage:
- *   skeleton.js -t /path/to/template.conf --server_name=example.com --domain=example.com ...
- *
- * Simple string interpolation: $(variable_name) or ${variable_name} in templates
+ *   skeleton.js -t /path/to/template.conf --server_name=foo --domain=bar ...
  */
 
+'use strict';
+
 const fs = require('fs');
-const path = require('path');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
 
-const CONFIG_FILE = '/usr/local/share/easy/skeleton.conf';
-
-function main() {
-  const argv = yargs(hideBin(process.argv))
-    .option('t', {
-      alias: 'template-file',
-      describe: 'Use template file',
-      type: 'string',
-      demandOption: true,
-    })
-    .option('c', {
-      alias: 'config-file',
-      describe: 'Use a different config file',
-      type: 'string',
-      default: CONFIG_FILE,
-    })
-    .option('server_name', {
-      type: 'string',
-      default: '',
-    })
-    .option('domain', {
-      type: 'string',
-      default: '',
-    })
-    .option('location_path', {
-      type: 'string',
-      default: '/',
-    })
-    .option('location_target', {
-      type: 'string',
-      default: '',
-    })
-    .strict()
-    .help()
-    .parseSync();
-
-  const templateFile = argv.t;
-  const configFile = argv.c;
-
-  // Validate template file exists
-  if (!fs.existsSync(templateFile)) {
-    console.error(`ERROR: template file ${templateFile} not found`);
-    process.exit(1);
+function parseArgs(argv) {
+  const args = { t: null, c: null, server_name: '', domain: '', location_path: '/', location_target: '' };
+  for (let i = 2; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '-t' || arg === '--template-file') { args.t = argv[++i]; continue; }
+    if (arg === '-c' || arg === '--config-file')   { args.c = argv[++i]; continue; }
+    const m = arg.match(/^--(\w+)(?:=(.*))?$/);
+    if (m) { args[m[1]] = m[2] !== undefined ? m[2] : (argv[++i] || ''); }
   }
-
-  // Validate config file exists (but don't require contents)
-  if (configFile && configFile !== CONFIG_FILE && !fs.existsSync(configFile)) {
-    console.error(`ERROR: config file ${configFile} not found`);
-    process.exit(1);
-  }
-
-  // Read template
-  let template;
-  try {
-    template = fs.readFileSync(templateFile, 'utf-8');
-  } catch (err) {
-    console.error(`ERROR: unable to read template file: ${err.message}`);
-    process.exit(1);
-  }
-
-  // Build variable dictionary (all CLI args except argv/_ at the end)
-  const variables = {
-    server_name: argv.server_name,
-    domain: argv.domain,
-    location_path: argv.location_path,
-    location_target: argv.location_target,
-  };
-
-  // Simple variable substitution: ${ var_name } → value
-  let rendered = template;
-  for (const [key, value] of Object.entries(variables)) {
-    // Match ${key} or $key (both forms)
-    const regexBraces = new RegExp(`\\$\\{${key}\\}`, 'g');
-    const regexPlain = new RegExp(`\\$${key}\\b`, 'g');
-    rendered = rendered.replace(regexBraces, value || '');
-    rendered = rendered.replace(regexPlain, value || '');
-  }
-
-  // Output result
-  console.log(rendered);
+  return args;
 }
 
-if (require.main === module) {
-  try {
-    main();
-  } catch (err) {
-    console.error(`ERROR: ${err.message}`);
-    process.exit(1);
-  }
+const args = parseArgs(process.argv);
+
+if (!args.t) { console.error('ERROR: -t <template-file> required'); process.exit(1); }
+if (!fs.existsSync(args.t)) { console.error('ERROR: template file not found: ' + args.t); process.exit(1); }
+
+let tmpl = fs.readFileSync(args.t, 'utf-8');
+
+const vars = { server_name: args.server_name, domain: args.domain, location_path: args.location_path, location_target: args.location_target };
+
+for (const [k, v] of Object.entries(vars)) {
+  tmpl = tmpl.replace(new RegExp('\\$\\{' + k + '\\}', 'g'), v || '');
+  tmpl = tmpl.replace(new RegExp('\\$' + k + '\\b', 'g'), v || '');
 }
 
-module.exports = { main };
+// Unescape \$ → $ (Cheetah escape for literal nginx variables like \$upstream)
+tmpl = tmpl.replace(/\\\$/g, '$');
+
+process.stdout.write(tmpl);

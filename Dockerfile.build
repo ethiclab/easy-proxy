@@ -22,6 +22,9 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 # Install nginx + system deps + pip packages for DNS providers
 RUN apk add --no-cache \
     nginx \
+    bash \
+    nodejs \
+    npm \
     sudo \
     py3-pip \
     ca-certificates \
@@ -40,11 +43,14 @@ RUN certbot plugins
 # Verify nginx
 RUN nginx -v
 
+# Reset certbot's ENTRYPOINT so nginx-easy can use CMD directly
+ENTRYPOINT []
+
 # Volume for letsencrypt persistence
 VOLUME ["/etc/letsencrypt", "/var/cache/certbot", "/var/www/certbot"]
 
 # Listen ports (will be exposed in easy-proxy)
 EXPOSE 80 443
 
-# Default entrypoint - can be overridden by easy-proxy
-CMD ["nginx", "-g", "daemon off;"]
+# Default: run certbot (overridden in easy-proxy by easy-proxy-start)
+CMD ["certbot", "--help"]

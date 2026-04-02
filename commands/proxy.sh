@@ -139,7 +139,7 @@ chmod 600 /etc/letsencrypt/ionos.ini"
 
   # Generate certificate via DNS-01 challenge with IONOS plugin
   echo "Generating certificate for ${domain} and *.${domain} via IONOS DNS..."
-  docker exec -it "${EASY_PROXY}" certbot certonly \
+  docker exec "${EASY_PROXY}" certbot certonly \
    --non-interactive \
    --agree-tos \
    --email "${EASY_LETSENCRYPT_EMAIL}" \
@@ -155,7 +155,7 @@ chmod 600 /etc/letsencrypt/ionos.ini"
    echo "Proxy is not running."
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" sudo nginx -c /usr/local/share/easy/nginx.conf -s reload
+  docker exec "${EASY_PROXY}" nginx -c /usr/local/share/easy/nginx.conf -s reload
   return $?
  fi
  if [[ "build" == "$2" ]]; then
@@ -177,9 +177,9 @@ chmod 600 /etc/letsencrypt/ionos.ini"
    return 1
   fi
   if [[ "http" == "$3" ]]; then
-   docker exec -it "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_http $4 $5 $6
+   docker exec "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_http $4 $5 $6
   elif [[ "https" == "$3" ]]; then
-   docker exec -it "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_https $4 $5 $6
+   docker exec "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_https $4 $5 $6
   else
    echo "Invalid protocol $3"
    return 1

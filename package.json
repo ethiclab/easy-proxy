@@ -31,7 +31,5 @@
     "url": "https://github.com/ethiclab/easy-proxy/issues"
   },
   "homepage": "https://github.com/ethiclab/easy-proxy#readme",
-  "dependencies": {
-    "yargs": "^17.7.2"
-  }
+  "dependencies": {}
 }
