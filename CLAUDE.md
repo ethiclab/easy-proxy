@@ -1,311 +1,306 @@
 # easy-proxy — CLAUDE.md
 
-> Dynamic nginx reverse proxy CLI with integrated Let's Encrypt SSL
-> Status: **ACTIVE** (riprendere e modernizzare)
-> Ultima build: v1.0.24 (2021-11-17)
+> Nginx reverse proxy CLI con Let's Encrypt SSL automation e multi-DNS provider.
+> Stato: **ATTIVO** — v2.0.0 in sviluppo
+> Ultimo aggiornamento: 2026-04-02
 
 ---
 
-## 1. Cos'è easy-proxy
+## 0. Primo passo obbligatorio
 
-**Scopo**: CLI Node.js che orchestra container Docker con nginx per esporre servizi interni su sottodomini pubblici con SSL/TLS automatico via Let's Encrypt.
-
-**Problema che risolve**: Gestire multiple vhost nginx + certificati SSL senza configurazione manuale.
-
-**Esempio workflow**:
 ```bash
-easy proxy create                                    # Avvia container nginx
-docker run nginx server1                              # Container con app
-docker network connect network1 server1              # Connetti a network
-easy proxy new http server1.example.com example.com http://server1:80
-easy proxy certbot                                   # Genera SSL
-easy proxy reload                                    # Ricarica nginx
-# → server1.example.com raggiungibile con HTTPS automatico
-```
-
-**Chi lo usa**: Network admin, DevOps, developer per test environment con SSL realistico.
-
----
-
-## 2. Architettura
-
-### 2.1 Struttura repository
-
-```
-easy-proxy/
-├── easy                           # Entry point bash (CLI orchestrator)
-├── commands/
-│   └── proxy.sh                   # Implementazione del comando `easy proxy`
-├── easyhome/                      # Template + config nginx
-│   ├── nginx.conf                 # Main config (include /domains/*/*.conf)
-│   ├── common.conf                # Snippet condiviso
-│   ├── templates/                 # Template per vhost http/https
-│   │   ├── http.conf
-│   │   ├── http.default.conf
-│   │   ├── https.conf
-│   │   └── https.default.conf
-│   ├── add_subdomain_http         # Script per aggiungere vhost
-│   ├── add_subdomain_https
-│   ├── add_domain
-│   ├── easy-proxy-start           # Entrypoint del container
-│   └── options-ssl-nginx.conf     # Opzioni SSL/TLS
-├── package.json                   # Meta npm (bin: easy)
-├── Dockerfile                     # Build image (usa base ethiclab/nginx-certbot:1.1)
-└── README.md
-```
-
-### 2.2 Flusso dell'applicazione
-
-```
-UTENTE LOCALE (dev)
-    │
-    ├─ npm install -g @ethiclab/easy-cli
-    │
-    └─ easy [command] [args]
-        ↓
-        bash easy script
-        │
-        ├─ dispatcher: ruby/python/shell?
-        │
-        └─ source commands/proxy.sh
-            └─ __easy_command_proxy_[subcommand]
-                ├─ create    → docker run ethiclab/nginx-easy
-                ├─ new       → docker exec add_subdomain_{http|https}
-                ├─ certbot   → docker exec certbot --email --manual
-                ├─ reload    → docker exec nginx -s reload
-                ├─ logs      → docker logs -f
-                ├─ status/id → cat .id or docker ps
-                └─ destroy   → docker stop + rm
-                    ↓
-                CONTAINER DOCKER (ethiclab/nginx-certbot:1.1)
-                    │
-                    ├─ nginx (www-data)
-                    │   └─ client_max_body_size: 5GB
-                    │   └─ include /domains/*/*.conf
-                    │
-                    ├─ certbot + rfc2136 DNS solver
-                    │
-                    └─ volumes:
-                       ├─ /domains → EASY_DOMAINS_DIR (local)
-                       ├─ /etc/letsencrypt → EASY_LETSENCRYPT_DIR (local)
-                       └─ /usr/local/share/easy → easyhome/ (repo)
-```
-
-### 2.3 Dipendenze
-
-**Runtime**:
-- `bash` / `zsh` (CLI orchestrator)
-- Docker CLI (per docker run/exec/logs)
-- Node.js (solo per bin mapping — non eseguito)
-- `which`, `date` (POSIX utilities)
-
-**Container base**:
-- `ethiclab/nginx-certbot:1.1` — **CRITICO**: container custom prebuildo
-  - Contiene: nginx, certbot, rfc2136 DNS plugin, sudo, CA certs
-  - Nessun link pubblico trovato — va rebuild da `Dockerfile` oppure ricreato
-
-**Environment variables (OBBLIGATORI)**:
-```bash
-export EASY_DIR=$(dirname $(realpath $(which easy)))        # Auto set, ma usato
-export EASY_LETSENCRYPT_DIR=/path/to/letsencrypt/persist  # Obbligatorio
-export EASY_DOMAINS_DIR=/path/to/domains/config            # Obbligatorio
-export EASY_LETSENCRYPT_EMAIL=admin@example.com            # Per certbot
-export EASY_LETSENCRYPT_DOMAIN=example.com                 # Per rfc2136
+cd ~/ethiclab/lab/easy-proxy
+cat STATE.md                    # stato WIP e blocchi attivi
+easy proxy status               # container running?
 ```
 
 ---
 
-## 3. Comandi disponibili
+## 1. Cos'è e perché esiste
 
-| Comando | Sottocmd | Effetto |
-|---------|----------|--------|
-| `easy --version` | — | Stampa versione da package.json |
-| `easy proxy help` | — | Stampa help |
-| `easy proxy create` | — | Avvia container docker (salva ID in `.id`) |
-| `easy proxy build` | — | Build image da Dockerfile → `ethiclab/nginx-easy` |
-| `easy proxy new` | `[http\|https] <fqdn> <domain> <target>` | Aggiunge vhost |
-| `easy proxy certbot` | — | Richiede certificato a Let's Encrypt (manual mode) |
-| `easy proxy rfc2136` | — | Certificato con DNS-01 via RFC2136 |
-| `easy proxy status` | — | Docker PS: mostra se container è running |
-| `easy proxy id` | — | Cat `.id` (Docker container ID) |
-| `easy proxy start` | — | `docker start` |
-| `easy proxy stop` | — | `docker stop` |
-| `easy proxy restart` | — | `docker restart` |
-| `easy proxy reload` | — | `docker exec nginx -s reload` |
-| `easy proxy sh` | — | `docker exec -it bash` |
-| `easy proxy log` | — | `docker logs -f` |
-| `easy proxy destroy` | — | Stop + rm + clean `.id` |
+CLI bash+Docker che:
+1. Avvia un container nginx con certbot preinstallato
+2. Genera vhost nginx da template (`easy proxy new http|https ...`)
+3. Richiede certificati SSL Let's Encrypt via DNS-01 automatico (**IONOS API**)
+
+**Usecase primario (UC1)**: dev locale ELEVEN/BGOL con HTTPS valido e nomi reali (`platform.dev.ethiclab.it`) invece di `localhost:8010`.
 
 ---
 
-## 4. Use case attuali (Edu)
+## 2. Architettura corrente (v2.0.0)
 
-### 4.1 Scenario: EthicLab cluster locale con SSL
+```
+easy (bash entry point)
+ └─ dispatcher: .sh / .py / .rb
+     └─ commands/proxy.sh
+         └─ __easy_command_proxy_[subcommand]
+             ├─ create          → docker run ethiclab/nginx-easy
+             ├─ new http|https  → docker exec add_subdomain_{http|https}
+             │                       └─ skeleton.js (template renderer, zero deps)
+             ├─ certbot-ionos   → certbot --dns-ionos (auto TXT record via IONOS API)
+             ├─ certbot         → certbot --manual (interattivo, TXT a mano)
+             ├─ rfc2136         → certbot/dns-rfc2136 (TSIG DNS)
+             ├─ reload          → docker exec nginx -s reload
+             └─ ...
 
-**Situazione attuale**: Eleven/BGOL/ETICA girano in `localhost:<porta>`.
-- Sviluppatori testano in HTTP locale
-- Client demo necessitano HTTPS + vhost veri (es. `platform.demo.ethiclab.it`)
-- Let's Encrypt per cert reali (non self-signed)
+CONTAINER: ethiclab/nginx-easy
+ └─ BASE: ethiclab/nginx-certbot:2.0
+     ├─ nginx 1.26.3
+     ├─ bash, Node 20
+     ├─ certbot + certbot-dns-ionos 2024.11.9
+     ├─ certbot-dns-route53, cloudflare, digitalocean
+     └─ ENTRYPOINT []   ← resettato (non eredita certbot entrypoint)
 
-**Con easy-proxy**:
-```bash
-# Setup una volta
-export EASY_LETSENCRYPT_DIR=~/certs
-export EASY_DOMAINS_DIR=~/domains
-easy proxy create              # Container nginx → ports 80/443
-
-# Aggiungere servizio Eleven platform
-docker network create ethiclab
-docker run -d --name platform --network ethiclab -p 8010:8010 <eleven-platform>
-easy proxy new https platform.demo.ethiclab.it demo.ethiclab.it http://platform:8010
-easy proxy certbot
-
-# → https://platform.demo.ethiclab.it raggiungibile con cert SSL valido
+VOLUMI (host → container):
+ EASY_DOMAINS_DIR     → /domains         (vhost .conf generati)
+ EASY_LETSENCRYPT_DIR → /etc/letsencrypt (certificati persistenti)
+ easyhome/            → /usr/local/share/easy (templates, scripts, skeleton.js)
 ```
 
-**Vantaggi**:
-- Singolo proxy per tutti i servizi cluster
-- SSL/TLS trasparente (auto-renew certbot ogni 90gg)
-- Config vhost in `/domains/demo.ethiclab.it/*.conf` (tracciabile in git)
-- Load balancing opzionale (nginx upstream blocks)
+### Flusso template
 
-### 4.2 Scenario: Demo/roadshow con sottodomini temporanei
+```
+easy proxy new https myapp.dev.ethiclab.it dev.ethiclab.it http://host.docker.internal:8010
+  └─ docker exec add_subdomain_https myapp.dev.ethiclab.it dev.ethiclab.it http://...
+      └─ skeleton.js -t templates/https.conf --server_name ... --domain ...
+          └─ sostituisce $server_name, $domain, $location_path, $location_target
+          └─ unescape \$ → $ (per variabili nginx come $upstream)
+          └─ output → /domains/dev.ethiclab.it/https.myapp.dev.ethiclab.it.conf
+```
 
-**Situazione**: Evento domani, clienti vedono feature Eleven su `https://vendor-X.demo.ethiclab.it`
+---
 
-**Con easy-proxy**:
+## 3. Setup locale (Quick Start)
+
+### Prerequisiti
+
 ```bash
-# Veloce: 2 minuti
-easy proxy new https vendor-X.demo.ethiclab.it demo.ethiclab.it http://platform-staging:8010
+docker --version    # 20.10+
+node --version      # qualsiasi (solo per bin easy)
+```
+
+### Installazione
+
+```bash
+cd ~/ethiclab/lab/easy-proxy
+npm install -g .           # installa 'easy' nel PATH
+# oppure usa path diretto:
+export PATH="$HOME/ethiclab/lab/easy-proxy:$PATH"
+```
+
+### Environment variables (obbligatorie)
+
+```bash
+export EASY_DIR="$HOME/ethiclab/lab/easy-proxy"
+export EASY_LETSENCRYPT_DIR="$HOME/.easy-proxy/letsencrypt"
+export EASY_DOMAINS_DIR="$HOME/.easy-proxy/domains"
+export EASY_LETSENCRYPT_EMAIL="admin@ethiclab.it"
+mkdir -p "$EASY_LETSENCRYPT_DIR" "$EASY_DOMAINS_DIR"
+```
+
+Aggiungi queste righe a `~/.zshrc` o `~/.bashrc` per averle sempre disponibili.
+
+### Build immagine locale
+
+```bash
+# Base image (solo se non esiste o vuoi rebuildarla)
+docker build -f Dockerfile.build -t ethiclab/nginx-certbot:2.0 .
+
+# Main image (sempre prima di easy proxy create)
+docker build -t ethiclab/nginx-easy:latest .
+```
+
+### Avvio container
+
+```bash
+easy proxy create
+easy proxy status   # → container ID se running
+```
+
+---
+
+## 4. Comandi
+
+| Comando | Uso |
+|---------|-----|
+| `easy proxy create` | Avvia container nginx sulle porte 80/443 |
+| `easy proxy build` | Build `ethiclab/nginx-easy` da Dockerfile locale |
+| `easy proxy new http\|https <fqdn> <domain> <target>` | Aggiunge vhost |
+| `easy proxy certbot-ionos <domain>` | Genera wildcard cert via IONOS DNS-01 (auto) |
+| `easy proxy certbot` | Genera cert via DNS-01 manuale (interattivo) |
+| `easy proxy rfc2136` | Genera cert via RFC2136/BIND DNS |
+| `easy proxy reload` | Ricarica nginx (dopo new o modifica conf) |
+| `easy proxy status` | Container ID se running, vuoto se fermo |
+| `easy proxy id` | Legge `.id` file (container ID raw) |
+| `easy proxy start/stop/restart` | Ciclo container |
+| `easy proxy sh` | Shell interattiva nel container |
+| `easy proxy log` | `docker logs -f` del container |
+| `easy proxy destroy` | Stop + rm + pulizia `.id` |
+
+---
+
+## 5. Integrazione IONOS (UC1)
+
+### Prerequisiti
+
+```bash
+brew install pass          # macOS
+pass init "<gpg-key-id>"   # prima configurazione
+
+pass insert ionos/api-key       # API Key da IONOS → Account → Developer → API Keys
+pass insert ionos/api-secret    # API Secret (stesso pannello)
+```
+
+Oppure via env vars (meno sicuro):
+```bash
+export IONOS_API_KEY="xxx"
+export IONOS_API_SECRET="yyy"
+```
+
+### Flusso UC1 completo
+
+```bash
+# 1. Genera cert wildcard per dev.ethiclab.it e *.dev.ethiclab.it
+easy proxy certbot-ionos dev.ethiclab.it
+# → Crea /etc/letsencrypt/ionos.ini (chmod 600) dentro il container
+# → certbot usa IONOS API per creare TXT _acme-challenge.dev.ethiclab.it
+# → Let's Encrypt verifica e rilascia il cert
+
+# 2. Crea vhost per ELEVEN (porte locali)
+easy proxy new https platform.dev.ethiclab.it dev.ethiclab.it http://host.docker.internal:8010
+easy proxy new https onceapi.dev.ethiclab.it dev.ethiclab.it http://host.docker.internal:8011
+easy proxy new https onceui.dev.ethiclab.it dev.ethiclab.it http://host.docker.internal:3000
+easy proxy new https backoffice.dev.ethiclab.it dev.ethiclab.it http://host.docker.internal:3001
+
+# 3. Reload
 easy proxy reload
-# Fatto. Client vede nome reale + SSL.
 
-# Dopo: cleanup
-easy proxy destroy              # Remove all
-rm -rf ~/domains ~/certs
+# 4. Aggiungi a /etc/hosts (finché non hai split-view DNS)
+echo "127.0.0.1 platform.dev.ethiclab.it onceapi.dev.ethiclab.it onceui.dev.ethiclab.it backoffice.dev.ethiclab.it" | sudo tee -a /etc/hosts
+
+# 5. Test
+curl -k https://platform.dev.ethiclab.it/
 ```
 
-### 4.3 Scenario: Migrazione cloud (future)
-
-**Oggi**: easy-proxy Docker locale.
-**Domani**: Traefik / OIDC proxy in AWS per prod.
-
-easy-proxy rimane per:
-- Dev locale con SSL
-- Staging/test in piccola infra (VPS singolo)
-- Learning tool (capire nginx/Let's Encrypt)
+Guida completa: [UC1_LOCAL_SSL_SETUP.md](UC1_LOCAL_SSL_SETUP.md)
 
 ---
 
-## 5. Stack tecnico
+## 6. Test
 
-| Componente | Versione | Note |
-|-----------|----------|------|
-| Node.js | (any) | Solo bin mapping, non eseguito |
-| Bash | POSIX | CLI orchestrator |
-| Docker | 20.10+ | Obbligatorio |
-| nginx | (in container) | Da base image ethiclab/nginx-certbot:1.1 |
-| certbot | (in container) | DNS-01 (rfc2136), manual |
-| Python | (in container) | Certbot dependency |
+### Test locale (senza credenziali IONOS)
 
-**Compatibilità OS**:
-- Linux: ✅ (primary)
-- macOS: ⚠️ (necessita `gdate` gnu-tools)
-- Windows: ❌ (Bash nativo, no Hyper-V proxy)
+```bash
+cd ~/ethiclab/lab/easy-proxy
+export EASY_DIR="$PWD"
+export EASY_LETSENCRYPT_DIR="$HOME/.easy-proxy/letsencrypt"
+export EASY_DOMAINS_DIR="$HOME/.easy-proxy/domains"
+export EASY_LETSENCRYPT_EMAIL="test@ethiclab.it"
+export PATH="$EASY_DIR:$PATH"
 
----
+# Test 1: container lifecycle
+easy proxy create
+easy proxy status        # ← deve stampare un ID
+docker ps | grep nginx-easy
 
-## 6. Problemi noti / gap
+# Test 2: vhost HTTP (non richiede cert)
+easy proxy new http myapp.test.ethiclab.it test.ethiclab.it http://host.docker.internal:8010
+ls "$EASY_DOMAINS_DIR/test.ethiclab.it/"   # ← 2 file .conf
+easy proxy reload                            # ← deve uscire senza errori
 
-| Problema | Severità | Note |
-|----------|----------|------|
-| **Base image persa** | 🔴 CRITICO | `ethiclab/nginx-certbot:1.1` non trovato su Docker Hub — va rebuild o ricreato |
-| **Dipendenza da EASY_DOMAINS_DIR/EASY_LETSENCRYPT_DIR** | 🟡 MEDIO | Non automatizzato in setup — richiede manual env config |
-| **No test automatizzati** | 🟡 MEDIO | package.json: `"test": "echo \"Error: no test specified\""` |
-| **Niente sidekick monitoring** | 🟠 BASSO | Niente health check container, niente auto-restart |
-| **Single proxy instance** | 🟠 BASSO | `.id` è singleton — una sola istanza proxy locale (OK per dev) |
-| **No reload protection** | 🟠 BASSO | `easy proxy reload` senza validation pre-reload |
-| **Python 2/3 ambiguità** | 🟡 MEDIO | `skeleton.py` nel repo ma mai usato — serve? |
+# Test 3: nginx risponde
+curl -s -o /dev/null -w "%{http_code}" http://localhost/  # ← 404 = OK (no backend)
 
----
+# Test 4: error paths certbot-ionos
+easy proxy certbot-ionos              # ← deve dire "Domain required"
+easy proxy certbot-ionos test.it      # ← deve dire "IONOS API credentials not found"
 
-## 7. Roadmap miglioramento
+# Cleanup
+easy proxy destroy
+rm -rf "$EASY_DOMAINS_DIR"/*
+```
 
-### Fase 1: Foundation (2 giorni)
-- [ ] Rebuild / discover base image `ethiclab/nginx-certbot:1.1`
-- [ ] Test locale `easy proxy create` → `easy proxy new http` → `easy proxy status`
-- [ ] Aggiornare README.md con quick-start moderno
-- [ ] Aggiungere `./.env.example` per EASY_* variables
+### Test con IONOS reale
 
-### Fase 2: Modernizzazione (3-4 giorni)
-- [ ] CLI rewrite: bash → **Node.js/TypeScript** (oclif o commander.js)
-  - Migliore di gestione error, logging, piping
-  - Easier testing (Jest)
-- [ ] Add unit tests (Jest) per comandi critici
-- [ ] Docker Compose alternativo per setup semplificato
-- [ ] Health check container + auto-restart policy
+```bash
+# Richiede: pass ionos/api-key e pass ionos/api-secret configurati
+easy proxy certbot-ionos dev.ethiclab.it
+# Verifica cert
+openssl x509 -in ~/.easy-proxy/letsencrypt/live/dev.ethiclab.it/cert.pem -noout -dates
+```
 
-### Fase 3: Production readiness (4-5 giorni)
-- [ ] Metrics: prometheus endpoint /metrics (nginx + certbot)
-- [ ] Logging: ECS/JSON format per container logs
-- [ ] Multi-instance proxy pattern (load balance between proxies)
-- [ ] Graceful reload: validazione config pre-reload
+### Rebuild immagini (dopo modifiche a Dockerfile.build)
 
-### Fase 4: Integration (future)
-- [ ] Integration con `devel/bin/mini`? (es. `mini proxy create`)
-- [ ] Terraform module per deploy in AWS ECS/ALB
-- [ ] GitOps: domains config sync da git
+```bash
+docker build -f Dockerfile.build -t ethiclab/nginx-certbot:2.0 .
+docker build -t ethiclab/nginx-easy:latest .
+# Ricrea container
+easy proxy destroy
+easy proxy create
+```
 
 ---
 
-## 8. File cruciali
+## 7. File chiave
 
-| File | Ruolo |
-|------|-------|
-| `easy` | Entry point CLI — leggi qui per capire dispatcher |
-| `commands/proxy.sh` | 150 linee, logica principale, router subcommand |
-| `easyhome/nginx.conf` | Main nginx config (semplicissima: include /domains/*) |
-| `easyhome/add_subdomain_http` | Script che genera vhost config da template |
-| `easyhome/templates/*.conf` | Template vhost http/https — studiare per capire variabili |
-| `Dockerfile` | Build image, dipende **non disponibile** `ethiclab/nginx-certbot:1.1` |
-
----
-
-## 9. Prossimi step
-
-1. **Subito**: Dove è la base image `ethiclab/nginx-certbot:1.1`?
-   - Se in Docker Hub → test pull locale
-   - Se persa → rebuild da source (Env Dockerfile) o locate.sh
-   - Se mai esistita → crearla (nginx + certbot + rfc2136)
-
-2. **Quick test**:
-   ```bash
-   cd lab/easy-proxy
-   npm install -g .                            # Installa easy CLI locale
-   easy --version                              # Test basic
-   easy proxy help                             # List comandi
-   ```
-
-3. **Documentazione**:
-   - README aggiornato
-   - `.env.example` template
-   - [OPTIONAL] Arch diagram (draw.io?
-
-4. **Decidere**: Easy-proxy per quale cluster / uso case è PRIORITARIO?
-   - Eleven (dev env)?
-   - BGOL (game-api)?
-   - Shared lab tool per demo?
+| File | Scopo | Modificare? |
+|------|-------|------------|
+| `commands/proxy.sh` | Tutti i comandi easy proxy | ✅ Sì |
+| `easyhome/skeleton.js` | Template renderer (zero deps) | ✅ Sì |
+| `easyhome/templates/*.conf` | Template nginx vhost | ✅ Sì |
+| `easyhome/nginx.conf` | Config nginx main | ⚠️ Con cautela |
+| `easyhome/ionos-config-helper.sh` | Helper credenziali IONOS | ✅ Sì |
+| `Dockerfile` | Build nginx-easy (usa base v2.0) | ⚠️ Raro |
+| `Dockerfile.build` | Build base image nginx-certbot:2.0 | ⚠️ Raro |
+| `easy` | CLI dispatcher bash | ⚠️ Non toccare |
 
 ---
 
-## 10. Referenze
+## 8. Gotcha
 
-- Original inspiration: https://github.com/jwilder/nginx-proxy
-- Certbot rfc2136 DNS plugin: https://certbot-dns-rfc2136.readthedocs.io/
-- Let's Encrypt wildcard: https://letsencrypt.org/docs/faq/
+| Problema | Causa | Fix |
+|----------|-------|-----|
+| `easy proxy create` fallisce: porta già allocata | Container vecchio ancora running | `easy proxy destroy` poi ricrea |
+| nginx reload fallisce: cert non trovato | `certbot-ionos` non ancora eseguito | Esegui `easy proxy certbot-ionos <domain>` prima |
+| `easy proxy new https` genera file ma reload fallisce | Cert non esiste per quel dominio | Usa `http` per test senza cert |
+| `docker exec` "not a TTY" | Solo `sh` usa `-it`, gli altri no | OK by design, non aggiungere `-it` ai comandi non-interattivi |
+| `skeleton.js`: variabile nginx `$upstream` scompare | Manca unescape `\$` → `$` | Già fixato in v2.0.0 — verificare se ritorni |
+| Container usa `nginx` user (Alpine) non `www-data` | nginx su Alpine usa `nginx` | `nginx.conf` ha `user nginx;` — non cambiare |
 
 ---
 
-**Creato**: 2026-04-01
-**Aggiornato da**: Claude (sessione ripresa easy-proxy)
-**Stato**: DRAFT — attende test locale e rebuilding base image
+## 9. Prossimi step (roadmap)
+
+### Subito (bloccante UC1)
+- [ ] Ottenere API key IONOS da pannello IONOS → configurare in `pass`
+- [ ] Eseguire `easy proxy certbot-ionos dev.ethiclab.it` (primo cert reale)
+- [ ] Push `ethiclab/nginx-certbot:2.0` su Docker Hub + ghcr.io
+- [ ] Test UC1 end-to-end con ELEVEN locale
+
+### Prossima sessione
+- [ ] Split-view DNS con dnsmasq (UC1 Phase 2)
+- [ ] Register.it DNS provider support (Phase 3)
+- [ ] `easy proxy renew` command (auto-renew certs)
+- [ ] `.env.example` file per onboarding nuovi dev
+
+### Futuro
+- [ ] `easy proxy certbot-route53` (per infra AWS)
+- [ ] `mini proxy [...]` wrapper in devel/bin/mini
+- [ ] Docker Hub auto-build via GitHub Actions per base image
+
+---
+
+## 10. Decisioni architetturali
+
+Vedi `decisions.md` (da creare) per le scelte fatte.
+
+Principali:
+- **Bash CLI** mantenuto (non migrato a Node.js) — semplicità > ergonomia
+- **Zero-dependency skeleton.js** — evita yargs globale nel container
+- **Alpine base** per nginx-certbot — immagine più piccola, ma richiede `user nginx;` invece di `www-data`
+- **ENTRYPOINT []** resettato in base image — altrimenti CMD viene passato come arg a certbot
+- **pass CLI** per credenziali — sicurezza > comodità env vars
+
+---
+
+**Vedi anche**: [STATE.md](STATE.md) · [UC1_LOCAL_SSL_SETUP.md](UC1_LOCAL_SSL_SETUP.md) · [USE_CASES.md](USE_CASES.md)
