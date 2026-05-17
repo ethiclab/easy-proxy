@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2155
+# Pre-existing finding baselined for incremental ShellCheck adoption — see #8.
 export EASY_HOME=$(pwd)
 export PATH=$EASY_HOME:$PATH

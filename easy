@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1001,SC1090,SC2046,SC2086,SC2155,SC2164
+# Pre-existing findings baselined for incremental ShellCheck adoption — see #8.
 DATE=$(which date)
 GDATE=$(which gdate 2>/dev/null)
 if [ -x "$GDATE" ]; then
@@ -71,14 +73,14 @@ function easy {
  C_RB="$D/$C.rb"
  if [[ -f "$C_RB" ]]; then
   C_OK="$C_RB"
-    ruby $C_RB $@
+    ruby "$C_RB" "$@"
     return $?
  fi
  # Look for python impl
  C_PY="$D/$C.py"
  if [[ -f "$C_PY" ]]; then
   C_OK="$C_PY"
-    python $C_PY $@
+    python "$C_PY" "$@"
     return $?
  fi
  if [[ -z "$C_OK" ]]; then
@@ -104,7 +106,7 @@ function easy {
    if [ -n "$C_OK" ]; then
     # It's available as
     # a shell function
-    __easy_command_"$C2" $@
+    __easy_command_"$C2" "$@"
     return $?
    fi
   fi
@@ -116,4 +118,4 @@ function easy {
  fi
 }
 
-easy $@
+easy "$@"
