@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2046,SC2086,SC2124,SC2155,SC2181
+# Pre-existing findings baselined for incremental ShellCheck adoption — see #8.
 
 #######################################################################################
 # BEGIN: utilities from https://github.com/montoyaedu/Trish/blob/master/test_tools.sh #
@@ -11,7 +13,7 @@ function read_input {
 }
 
 function debug {
-    $(>&2 echo $@)
+    >&2 echo "$@"
 }
 
 function is {

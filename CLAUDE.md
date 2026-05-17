@@ -75,9 +75,19 @@ easy proxy new https myapp.dev.ethiclab.it dev.ethiclab.it http://host.docker.in
 ### Prerequisiti
 
 ```bash
-docker --version    # 20.10+
-node --version      # qualsiasi (solo per bin easy)
+docker --version       # 20.10+
+node --version         # qualsiasi (solo per bin easy)
+shellcheck --version   # 0.10+ — linter shell (brew install shellcheck)
 ```
+
+### Lint
+
+```bash
+npm run lint    # shellcheck su easy, commands/*.sh, easyhome/* shell, .husky/pre-push
+```
+
+Lo script `lint` è eseguito anche dal hook `.husky/pre-push`. I file con finding pre-esistenti
+hanno una direttiva `# shellcheck disable=` baselined (vedi issue #8 per la pulizia).
 
 ### Installazione
 
