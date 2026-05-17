@@ -1,54 +1,36 @@
-# CI Pipeline — lint, typecheck, test, coverage
-# Scaffolded by metaswarm init. Customize for your project.
+# CI Pipeline — ShellCheck lint
+# Originally metaswarm-scaffolded for a Node/TypeScript project; rewritten for
+# this Bash + Docker project. See issue #10.
+#
+# Scope: lint only. The test + coverage job is added by issue #7 (bats harness),
+# which must also handle the kcov-based enforcement command from
+# .coverage-thresholds.json.
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
+
+env:
+  # Keep in sync with local dev (CLAUDE.md §3). Runner-preinstalled ShellCheck
+  # versions drift and produce different findings — pin for reproducible lint.
+  SHELLCHECK_VERSION: v0.11.0
 
 jobs:
-  ci:
-    name: Lint, Test & Coverage
+  lint:
+    name: ShellCheck Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Install dependencies
-        run: npm ci
+      - name: Install ShellCheck ${{ env.SHELLCHECK_VERSION }}
+        run: |
+          curl -fsSL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJ
+          sudo install "shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+          shellcheck --version
 
       - name: Lint
         run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Test with coverage
-        run: |
-          if [ -f .coverage-thresholds.json ]; then
-            # Read command from coverage config
-            CMD=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.coverage-thresholds.json','utf-8')).enforcement.command)")
-            echo "Running coverage command: $CMD"
-            # Split into array for safe execution
-            read -ra CMD_ARRAY <<< "$CMD"
-            # Validate first word is a known package manager/runner
-            case "${CMD_ARRAY[0]}" in
-              npm|pnpm|yarn|npx|bun|cargo|pytest|go|make) ;;
-              *) echo "Error: enforcement command must start with a known package manager/runner"; exit 1 ;;
-            esac
-            # Reject shell metacharacters in the full command string
-            if echo "$CMD" | grep -qE '[;|&`$(){}<>\\]'; then
-              echo "Error: enforcement command contains disallowed shell metacharacters"
-              exit 1
-            fi
-            # Execute as array — prevents all shell metacharacter interpretation
-            "${CMD_ARRAY[@]}"
-          else
-            npm test
-          fi

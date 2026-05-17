@@ -77,7 +77,7 @@ easy proxy new https myapp.dev.ethiclab.it dev.ethiclab.it http://host.docker.in
 ```bash
 docker --version       # 20.10+
 node --version         # qualsiasi (solo per bin easy)
-shellcheck --version   # 0.10+ — linter shell (brew install shellcheck)
+shellcheck --version   # 0.11.0 — linter shell, pinned in CI (brew install shellcheck)
 ```
 
 ### Lint
