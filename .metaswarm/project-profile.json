@@ -1,0 +1,33 @@
+{
+  "metaswarm_version": "0.11.0",
+  "distribution": "plugin",
+  "installed_at": "2026-05-17T13:47:05Z",
+  "updated_at": "2026-05-17T13:47:05Z",
+  "detection": {
+    "language": "JavaScript",
+    "primary_stack": "Bash + Docker (package.json ships the `easy` CLI bin only)",
+    "framework": null,
+    "test_runner": null,
+    "linter": null,
+    "formatter": null,
+    "package_manager": "yarn",
+    "type_checker": null,
+    "ci": null,
+    "git_hooks": null
+  },
+  "choices": {
+    "coverage_threshold": 100,
+    "external_tools": true,
+    "visual_review": false,
+    "ci_pipeline": true,
+    "git_hooks": true
+  },
+  "commands": {
+    "test": "bats test/",
+    "coverage": "kcov coverage bats test/",
+    "lint": null,
+    "typecheck": null,
+    "format_check": null
+  },
+  "notes": "No automated test suite exists yet. Recommended stack for this Bash CLI: bats (test runner) + kcov (coverage). The coverage gate is configured but inert until a test/ suite is added."
+}
