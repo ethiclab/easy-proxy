@@ -14,6 +14,11 @@ on:
   pull_request:
     branches: [master]
 
+env:
+  # Keep in sync with local dev (CLAUDE.md §3). Runner-preinstalled ShellCheck
+  # versions drift and produce different findings — pin for reproducible lint.
+  SHELLCHECK_VERSION: v0.11.0
+
 jobs:
   lint:
     name: ShellCheck Lint
@@ -21,10 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ubuntu-latest ships ShellCheck preinstalled; this surfaces the version
-      # and fails loudly with a clear signal if a future runner image drops it.
-      - name: ShellCheck version
-        run: shellcheck --version
+      - name: Install ShellCheck ${{ env.SHELLCHECK_VERSION }}
+        run: |
+          curl -fsSL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJ
+          sudo install "shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+          shellcheck --version
 
       - name: Lint
         run: npm run lint
