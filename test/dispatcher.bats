@@ -8,14 +8,14 @@ setup() { easy_setup; }
 @test "easy --version prints the package.json version" {
   run easy --version
   [ "$status" -eq 0 ]
-  [ "$output" = "2.0.0" ]
+  [ "$output" = "2.1.0" ]
 }
 
 @test "easy --version works without the runtime env vars set" {
   unset EASY_LETSENCRYPT_DIR EASY_DOMAINS_DIR
   run easy --version
   [ "$status" -eq 0 ]
-  [ "$output" = "2.0.0" ]
+  [ "$output" = "2.1.0" ]
 }
 
 @test "easy with no command prints usage and fails" {
