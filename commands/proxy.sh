@@ -47,6 +47,7 @@ function __easy_command_proxy_help {
  echo "    easy proxy status"
  echo "    easy proxy doctor"
  echo "    easy proxy verify"
+ echo "    easy proxy recover [--consolidate]"
  echo "    easy proxy attach <container>"
  echo "    easy proxy detach <container>"
  echo "    easy proxy networks [prune]"
@@ -235,6 +236,10 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   __easy_command_proxy_verify
   return $?
  fi
+ if [[ "recover" == "$2" ]]; then
+  __easy_command_proxy_recover "$3"
+  return $?
+ fi
  if [[ "attach" == "$2" ]]; then
   __easy_command_proxy_attach "$3"
   return $?
@@ -271,6 +276,77 @@ function __easy_command_proxy_verify {
   echo "no ${EASY_PROXY_NAME} container — run 'easy proxy create'."
  fi
  return 1
+}
+
+# Break-glass recovery: find the Docker networks the backends live on, connect
+# the proxy to them, restart and verify. Reports the de-facto edge network (the
+# one most backends share). With --consolidate it attaches the backends to the
+# edge network instead of joining the proxy to every backend network.
+function __easy_command_proxy_recover {
+ local consolidate=0 b net line
+ [[ "$1" == "--consolidate" ]] && consolidate=1
+
+ if [[ -z "$(easy proxy id)" ]]; then
+  echo "No ${EASY_PROXY_NAME} container — run 'easy proxy create' first."
+  return 1
+ fi
+
+ echo "easy proxy recover"
+
+ # Backend hostnames referenced statically by the vhost configs.
+ local backends
+ backends=$( {
+   grep -rhoE 'proxy_pass[[:space:]]+https?://[A-Za-z0-9._-]+' "${EASY_DOMAINS_DIR}" 2>/dev/null | sed -E 's#.*//##'
+   grep -rhoE 'server[[:space:]]+[A-Za-z0-9._-]+' "${EASY_DOMAINS_DIR}" 2>/dev/null | sed -E 's#server[[:space:]]+##'
+  } | sed -E 's#:[0-9]+$##' | sort -u )
+ if [[ -z "${backends}" ]]; then
+  echo "  no backend hostnames found in ${EASY_DOMAINS_DIR}"
+  return 1
+ fi
+
+ # Tally the user-defined networks the backend containers live on.
+ local netcounts
+ netcounts=$(
+   while IFS= read -r b; do
+    docker inspect "${b}" --format '{{range $k, $v := .NetworkSettings.Networks}}{{println $k}}{{end}}' 2>/dev/null
+   done <<< "${backends}" | grep -vE '^(bridge|host|none)?$' | sort | uniq -c | sort -rn )
+ if [[ -z "${netcounts}" ]]; then
+  echo "  no running backend containers found — nothing to connect."
+  return 1
+ fi
+
+ echo "backend networks (backends sharing each):"
+ while IFS= read -r line; do echo "  ${line}"; done <<< "${netcounts}"
+
+ local edge
+ if [[ -n "${EASY_PROXY_NETWORK}" ]]; then
+  edge="${EASY_PROXY_NETWORK}"
+  echo "edge network: ${edge}  (from EASY_PROXY_NETWORK)"
+ else
+  edge=$(echo "${netcounts}" | head -1 | awk '{print $2}')
+  echo "edge network: ${edge}  (detected — shared by the most backends)"
+  echo "  tip: export EASY_PROXY_NETWORK=${edge}"
+ fi
+
+ if [[ ${consolidate} -eq 1 ]]; then
+  echo "consolidating — attaching every backend to ${edge}:"
+  while IFS= read -r b; do
+   docker network connect "${edge}" "${b}" >/dev/null 2>&1 && echo "  attached ${b}"
+  done <<< "${backends}"
+  docker network connect "${edge}" "${EASY_PROXY_NAME}" >/dev/null 2>&1
+ else
+  echo "connecting ${EASY_PROXY_NAME} to the backend networks:"
+  local all_nets
+  all_nets=$(echo "${netcounts}" | awk '{print $2}')
+  while IFS= read -r net; do
+   docker network connect "${net}" "${EASY_PROXY_NAME}" >/dev/null 2>&1 && echo "  + ${net}"
+  done <<< "${all_nets}"
+ fi
+
+ echo "restarting ${EASY_PROXY_NAME}..."
+ docker restart "${EASY_PROXY_NAME}" >/dev/null 2>&1
+ sleep "${EASY_VERIFY_DELAY:-2}"
+ __easy_command_proxy_verify
 }
 
 function __easy_command_proxy_create {

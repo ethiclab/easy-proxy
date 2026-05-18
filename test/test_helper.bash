@@ -120,3 +120,20 @@ esac
 MOCK
   chmod +x "$MOCK_BIN/docker"
 }
+
+# Mock `docker` for `recover`: `inspect <container>` returns the networks listed
+# for that container in the $DOCKER_TOPOLOGY file ("<name> <net> [net...]").
+mock_docker_topology() {
+  cat > "$MOCK_BIN/docker" <<'MOCK'
+#!/usr/bin/env bash
+echo "$*" >> "${DOCKER_LOG:-/dev/null}"
+case "$1" in
+  ps) echo "deadbeefcafe1234" ;;
+  inspect)
+    line=$(grep "^$2 " "$DOCKER_TOPOLOGY" 2>/dev/null) || exit 1
+    for n in ${line#* }; do echo "$n"; done ;;
+  *) exit 0 ;;
+esac
+MOCK
+  chmod +x "$MOCK_BIN/docker"
+}
