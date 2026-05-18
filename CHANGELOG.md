@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   surfaces the startup error if it crashed. `easy proxy create` now runs this
   check automatically, so it no longer reports success when nginx failed to
   start.
+- `easy proxy recover` — break-glass network recovery. Scans the vhost configs
+  for backend hostnames, tallies the Docker networks they live on, connects the
+  proxy to them and restarts. Reports the de-facto edge network (the one most
+  backends share) and the outliers; `--consolidate` attaches the backends to
+  the edge network instead.
 
 ## [2.1.0] — 2026-05-18
 
