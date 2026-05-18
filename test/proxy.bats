@@ -30,7 +30,39 @@ setup() { easy_setup; }
   [[ "$output" == *"Invalid Email"* ]]
 }
 
+@test "easy proxy status reports the running container" {
+  mock_docker_running
+  run easy proxy status
+  [ "$status" -eq 0 ]
+  [ "$output" = "deadbeefcafe1234" ]
+}
+
+@test "easy proxy status is empty when no container is running" {
+  mock_docker_stopped
+  run easy proxy status
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "easy proxy create refuses when an instance already exists" {
+  mock_docker_running
+  run easy proxy create
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"already an easy proxy instance"* ]]
+}
+
+@test "easy proxy create writes no state file into the install dir (#5)" {
+  mock_docker_stopped
+  chmod -w "$EASY_CLI_DIR"
+  run easy proxy create
+  chmod +w "$EASY_CLI_DIR"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"Permission denied"* ]]
+  [ ! -e "$EASY_CLI_DIR/.id" ]
+}
+
 @test "easy proxy certbot-ionos reports when the proxy is not running" {
+  mock_docker_stopped
   run easy proxy certbot-ionos
   [ "$status" -eq 1 ]
   [[ "$output" == *"Proxy is not running"* ]]
@@ -38,7 +70,6 @@ setup() { easy_setup; }
 
 @test "easy proxy certbot-ionos requires a domain when the proxy is running" {
   mock_docker_running
-  mark_proxy_running
   export EASY_LETSENCRYPT_EMAIL="test@example.com"
   run easy proxy certbot-ionos
   [ "$status" -eq 1 ]
@@ -48,7 +79,6 @@ setup() { easy_setup; }
 @test "easy proxy certbot-ionos reports missing IONOS credentials" {
   mock_docker_running
   mock_pass_empty
-  mark_proxy_running
   export EASY_LETSENCRYPT_EMAIL="test@example.com"
   run easy proxy certbot-ionos example.com
   [ "$status" -eq 1 ]

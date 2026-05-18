@@ -1,5 +1,4 @@
 /node_modules/
-/.id
 
 # Build artifacts
 dist/
