@@ -34,8 +34,16 @@ function easy_verify_dir {
   fi
 }
 
-easy_verify_dir EASY_LETSENCRYPT_DIR "$EASY_LETSENCRYPT_DIR"
-easy_verify_dir EASY_DOMAINS_DIR "$EASY_DOMAINS_DIR"
+# `easy --version` and `easy proxy help` are informational — they need
+# neither EASY_LETSENCRYPT_DIR nor EASY_DOMAINS_DIR. Skip the check for them
+# so a freshly installed CLI can be inspected before those env vars are set.
+case "$1:$2" in
+  --version:* | proxy:help) : ;;
+  *)
+    easy_verify_dir EASY_LETSENCRYPT_DIR "$EASY_LETSENCRYPT_DIR"
+    easy_verify_dir EASY_DOMAINS_DIR "$EASY_DOMAINS_DIR"
+    ;;
+esac
 
 D="${EASY_DIR}/commands"
 function __private_easy_usage {

@@ -11,6 +11,13 @@ setup() { easy_setup; }
   [ "$output" = "2.0.0" ]
 }
 
+@test "easy --version works without the runtime env vars set" {
+  unset EASY_LETSENCRYPT_DIR EASY_DOMAINS_DIR
+  run easy --version
+  [ "$status" -eq 0 ]
+  [ "$output" = "2.0.0" ]
+}
+
 @test "easy with no command prints usage and fails" {
   run easy
   [ "$status" -eq 1 ]
