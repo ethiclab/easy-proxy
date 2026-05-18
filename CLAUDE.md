@@ -43,11 +43,11 @@ easy (bash entry point)
              ├─ reload          → docker exec nginx -s reload
              └─ ...
 
-CONTAINER: ethiclab/nginx-easy
- └─ BASE: ethiclab/nginx-certbot:2.0
-     ├─ nginx 1.26.3
+CONTAINER: ethiclab/nginx-easy   (Dockerfile self-contained, un solo build)
+ └─ FROM certbot/certbot:latest   (immagine pubblica ufficiale)
+     ├─ nginx (Alpine)
      ├─ bash, Node 20
-     ├─ certbot + certbot-dns-ionos 2024.11.9
+     ├─ certbot + certbot-dns-ionos
      ├─ certbot-dns-route53, cloudflare, digitalocean
      └─ ENTRYPOINT []   ← resettato (non eredita certbot entrypoint)
 
@@ -112,12 +112,12 @@ Aggiungi queste righe a `~/.zshrc` o `~/.bashrc` per averle sempre disponibili.
 
 ### Build immagine locale
 
-```bash
-# Base image (solo se non esiste o vuoi rebuildarla)
-docker build -f Dockerfile.build -t ethiclab/nginx-certbot:2.0 .
+Il `Dockerfile` è self-contained (`FROM certbot/certbot:latest`): un solo build,
+nessuna immagine base custom da preparare prima.
 
-# Main image (sempre prima di easy proxy create)
-docker build -t ethiclab/nginx-easy:latest .
+```bash
+easy proxy build                          # → ethiclab/nginx-easy
+# oppure direttamente: docker build -t ethiclab/nginx-easy .
 ```
 
 ### Avvio container
@@ -254,11 +254,10 @@ easy proxy certbot-ionos dev.ethiclab.it
 openssl x509 -in ~/.easy-proxy/letsencrypt/live/dev.ethiclab.it/cert.pem -noout -dates
 ```
 
-### Rebuild immagini (dopo modifiche a Dockerfile.build)
+### Rebuild immagine (dopo modifiche al Dockerfile)
 
 ```bash
-docker build -f Dockerfile.build -t ethiclab/nginx-certbot:2.0 .
-docker build -t ethiclab/nginx-easy:latest .
+easy proxy build
 # Ricrea container
 easy proxy destroy
 easy proxy create
@@ -275,8 +274,7 @@ easy proxy create
 | `easyhome/templates/*.conf` | Template nginx vhost | ✅ Sì |
 | `easyhome/nginx.conf` | Config nginx main | ⚠️ Con cautela |
 | `easyhome/ionos-config-helper.sh` | Helper credenziali IONOS | ✅ Sì |
-| `Dockerfile` | Build nginx-easy (usa base v2.0) | ⚠️ Raro |
-| `Dockerfile.build` | Build base image nginx-certbot:2.0 | ⚠️ Raro |
+| `Dockerfile` | Build nginx-easy, self-contained (`FROM certbot/certbot:latest`) | ⚠️ Raro |
 | `easy` | CLI dispatcher bash | ⚠️ Non toccare |
 
 ---
@@ -300,7 +298,6 @@ easy proxy create
 ### Subito (bloccante UC1)
 - [ ] Ottenere API key IONOS da pannello IONOS → configurare in `pass`
 - [ ] Eseguire `easy proxy certbot-ionos dev.ethiclab.it` (primo cert reale)
-- [ ] Push `ethiclab/nginx-certbot:2.0` su Docker Hub + ghcr.io
 - [ ] Test UC1 end-to-end con ELEVEN locale
 
 ### Prossima sessione
@@ -312,7 +309,7 @@ easy proxy create
 ### Futuro
 - [ ] `easy proxy certbot-route53` (per infra AWS)
 - [ ] `mini proxy [...]` wrapper in devel/bin/mini
-- [ ] Docker Hub auto-build via GitHub Actions per base image
+- [ ] (opz.) pubblicare `ethiclab/nginx-easy` su un registry per saltare il build locale
 
 ---
 
@@ -323,8 +320,9 @@ Vedi `decisions.md` (da creare) per le scelte fatte.
 Principali:
 - **Bash CLI** mantenuto (non migrato a Node.js) — semplicità > ergonomia
 - **Zero-dependency skeleton.js** — evita yargs globale nel container
-- **Alpine base** per nginx-certbot — immagine più piccola, ma richiede `user nginx;` invece di `www-data`
-- **ENTRYPOINT []** resettato in base image — altrimenti CMD viene passato come arg a certbot
+- **Dockerfile self-contained** (`FROM certbot/certbot:latest`) — un solo `docker build`, nessuna immagine base custom da preparare/pushare. Prima c'era un `Dockerfile.build` separato per `ethiclab/nginx-certbot:2.0`: rimosso, creava solo un problema di bootstrap senza registry
+- **Alpine base** (da `certbot/certbot`) — immagine più piccola, ma richiede `user nginx;` invece di `www-data`
+- **ENTRYPOINT []** resettato nel Dockerfile — altrimenti CMD viene passato come arg a certbot
 - **pass CLI** per credenziali — sicurezza > comodità env vars
 - **Container identificato per nome fisso** (`easy-proxy`), non da un file di stato `.id` — Docker è l'unica fonte di verità. Il vecchio `.id` veniva scritto nella install dir, root-owned dopo `npm install -g` → permission denied (issue #5)
 

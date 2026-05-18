@@ -216,10 +216,9 @@ cd ~/ethiclab/lab/easy-proxy && npm list | head -1
 # Should show "@ethiclab/easy-cli@2.0.0"
 ```
 
-**If stale**: Rebuild base image and easy-proxy
+**If stale**: Rebuild the image
 ```bash
-docker build -f Dockerfile.build -t ethiclab/nginx-certbot:2.0 .
-docker build -t ethiclab/nginx-easy:dev .
+easy proxy build
 ```
 
 ---

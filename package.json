@@ -7,7 +7,6 @@
     "commands/",
     "easyhome/",
     "Dockerfile",
-    "Dockerfile.build",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
