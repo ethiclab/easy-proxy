@@ -1,6 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2046,SC2086,SC2124,SC2155,SC2181
-# Pre-existing findings baselined for incremental ShellCheck adoption — see #8.
 
 #######################################################################################
 # BEGIN: utilities from https://github.com/montoyaedu/Trish/blob/master/test_tools.sh #
@@ -17,8 +15,9 @@ function debug {
 }
 
 function is {
-    local -r actual=$(read_input)
-    local -r expected="${@}"
+    local actual
+    actual=$(read_input)
+    local expected="$*"
     if [ "${actual}" == "${expected}" ]; then
         return 0
     else
@@ -77,7 +76,8 @@ function __easy_command_proxy {
   return $?
  fi
  if [[ "certbot" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy status)
   if [[ -z "${EASY_PROXY}" ]]; then
    echo "Proxy is not running."
    return 1
@@ -90,11 +90,12 @@ function __easy_command_proxy {
    echo "Invalid Domain. Set environment variable EASY_LETSENCRYPT_DOMAIN"
    return 1
   fi
-  docker exec -it "${EASY_PROXY}" sudo certbot --email ${EASY_LETSENCRYPT_EMAIL} --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}"
+  docker exec -it "${EASY_PROXY}" sudo certbot --email "${EASY_LETSENCRYPT_EMAIL}" --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}"
   return $?
  fi
  if [[ "certbot-ionos" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy status)
   if [[ -z "${EASY_PROXY}" ]]; then
    echo "Proxy is not running."
    return 1
@@ -152,7 +153,8 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   return $?
  fi
  if [[ "reload" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy status)
   if [[ -z "${EASY_PROXY}" ]]; then
    echo "Proxy is not running."
    return 1
@@ -165,7 +167,8 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   return $?
  fi
  if [[ "new" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy status)
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy status)
   if [[ -z "${EASY_PROXY}" ]]; then
    echo "Proxy is not running."
    return 1
@@ -179,9 +182,9 @@ chmod 600 /etc/letsencrypt/ionos.ini"
    return 1
   fi
   if [[ "http" == "$3" ]]; then
-   docker exec "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_http $4 $5 $6
+   docker exec "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_http "$4" "$5" "$6"
   elif [[ "https" == "$3" ]]; then
-   docker exec "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_https $4 $5 $6
+   docker exec "${EASY_PROXY}" /usr/local/share/easy/add_subdomain_https "$4" "$5" "$6"
   else
    echo "Invalid protocol $3"
    return 1
@@ -189,43 +192,49 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   return $?
  fi
  if [[ "sh" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy id)
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy id)
   docker exec -it "${EASY_PROXY}" bash
   return $?
  fi
  if [[ "log" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy id)
-  docker logs -f "${EASY_PROXY}" 
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy id)
+  docker logs -f "${EASY_PROXY}"
   return $?
  fi
  if [[ "destroy" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy id)
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy id)
   docker stop "${EASY_PROXY}"
   docker rm "${EASY_PROXY}"
-  rm $EASY_DIR/.id
+  rm "$EASY_DIR/.id"
   return $?
  fi
  if [[ "start" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy id)
-  docker start "${EASY_PROXY}" 
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy id)
+  docker start "${EASY_PROXY}"
   return $?
  fi
  if [[ "stop" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy id)
-  docker stop "${EASY_PROXY}" 
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy id)
+  docker stop "${EASY_PROXY}"
   return $?
  fi
  if [[ "restart" == "$2" ]]; then
-  local EASY_PROXY=$(easy proxy id)
-  docker restart "${EASY_PROXY}" 
+  local EASY_PROXY
+  EASY_PROXY=$(easy proxy id)
+  docker restart "${EASY_PROXY}"
   return $?
  fi
  if [[ "id" == "$2" ]]; then
-  [[ -f $EASY_DIR/.id ]] && cat $EASY_DIR/.id
+  [[ -f "$EASY_DIR/.id" ]] && cat "$EASY_DIR/.id"
   return $?
  fi
  if [[ "status" == "$2" ]]; then
-  [[ -f $EASY_DIR/.id ]] && easy proxy id >/dev/null && docker ps -q -f id=$(easy proxy id)
+  [[ -f "$EASY_DIR/.id" ]] && easy proxy id >/dev/null && docker ps -q -f "id=$(easy proxy id)"
   return $?
  fi
  if [[ -z "$2" ]]; then
@@ -238,7 +247,8 @@ chmod 600 /etc/letsencrypt/ionos.ini"
 }
 
 function __easy_command_proxy_create {
- local EASY_PROXY=$(easy proxy id)
+ local EASY_PROXY
+ EASY_PROXY=$(easy proxy id)
  if [[ ! -z "${EASY_PROXY}" ]]; then
   echo "There is already an easy proxy instance with docker id ${EASY_PROXY}"
   return 1
@@ -247,15 +257,15 @@ function __easy_command_proxy_create {
   echo "Invalid EASY_LETSENCRYPT_DIR"
   return 1
  fi
- local CONTAINER_ID=$(docker run -d \
- -v ${EASY_DOMAINS_DIR}:/domains \
- -v ${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt \
- -v ${EASY_DIR}/easyhome:/usr/local/share/easy \
+ local CONTAINER_ID
+ if CONTAINER_ID=$(docker run -d \
+ -v "${EASY_DOMAINS_DIR}:/domains" \
+ -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" \
+ -v "${EASY_DIR}/easyhome:/usr/local/share/easy" \
  -p 80:80 \
  -p 443:443 \
- -t ethiclab/nginx-easy)
- if [[ "$?" == "0" ]]; then
-   echo $CONTAINER_ID > $EASY_DIR/.id
+ -t ethiclab/nginx-easy); then
+   echo "$CONTAINER_ID" > "$EASY_DIR/.id"
  fi
  easy proxy id
 }
