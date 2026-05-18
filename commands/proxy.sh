@@ -46,6 +46,9 @@ function __easy_command_proxy_help {
  echo "    easy proxy id"
  echo "    easy proxy status"
  echo "    easy proxy doctor"
+ echo "    easy proxy attach <container>"
+ echo "    easy proxy detach <container>"
+ echo "    easy proxy networks [prune]"
  echo "    easy proxy start"
  echo "    easy proxy stop"
  echo "    easy proxy destroy"
@@ -227,6 +230,18 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   __easy_command_proxy_doctor
   return $?
  fi
+ if [[ "attach" == "$2" ]]; then
+  __easy_command_proxy_attach "$3"
+  return $?
+ fi
+ if [[ "detach" == "$2" ]]; then
+  __easy_command_proxy_detach "$3"
+  return $?
+ fi
+ if [[ "networks" == "$2" ]]; then
+  __easy_command_proxy_networks "$3"
+  return $?
+ fi
  if [[ -z "$2" ]]; then
   __easy_command_proxy_default
   return $?
@@ -245,8 +260,19 @@ function __easy_command_proxy_create {
   echo "Invalid EASY_LETSENCRYPT_DIR"
   return 1
  fi
+ # Join the edge network when EASY_PROXY_NETWORK is set, so recreating the
+ # container keeps its connectivity to the backends (see #23). Unset = default.
+ local network_args=()
+ if [[ -n "${EASY_PROXY_NETWORK}" ]]; then
+  if ! docker network inspect "${EASY_PROXY_NETWORK}" >/dev/null 2>&1; then
+   echo "Creating Docker network ${EASY_PROXY_NETWORK}"
+   docker network create "${EASY_PROXY_NETWORK}" >/dev/null || return 1
+  fi
+  network_args=(--network "${EASY_PROXY_NETWORK}")
+ fi
  docker run -d \
  --name "${EASY_PROXY_NAME}" \
+ "${network_args[@]}" \
  -v "${EASY_DOMAINS_DIR}:/domains" \
  -v "${EASY_LETSENCRYPT_DIR}:/etc/letsencrypt" \
  -v "${EASY_DIR}/easyhome:/usr/local/share/easy" \
@@ -318,6 +344,69 @@ function __easy_command_proxy_doctor {
 
  echo "summary: ${warnings} warning(s)"
  return "${nginx_failed}"
+}
+
+# Connect a site container to the edge network so the proxy can reach it.
+function __easy_command_proxy_attach {
+ if [[ -z "$1" ]]; then
+  echo "Usage: easy proxy attach <container>"
+  return 1
+ fi
+ if [[ -z "${EASY_PROXY_NETWORK}" ]]; then
+  echo "EASY_PROXY_NETWORK is not set — set it to the proxy's edge network first."
+  return 1
+ fi
+ docker network connect "${EASY_PROXY_NETWORK}" "$1"
+ return $?
+}
+
+# Disconnect a site container from the edge network.
+function __easy_command_proxy_detach {
+ if [[ -z "$1" ]]; then
+  echo "Usage: easy proxy detach <container>"
+  return 1
+ fi
+ if [[ -z "${EASY_PROXY_NETWORK}" ]]; then
+  echo "EASY_PROXY_NETWORK is not set."
+  return 1
+ fi
+ docker network disconnect "${EASY_PROXY_NETWORK}" "$1"
+ return $?
+}
+
+# Audit the networks the proxy is joined to; `prune` disconnects it from every
+# network other than EASY_PROXY_NETWORK.
+function __easy_command_proxy_networks {
+ if [[ -z "$(easy proxy id)" ]]; then
+  echo "Proxy container not found — run 'easy proxy create' first."
+  return 1
+ fi
+ local nets
+ nets=$(docker inspect "${EASY_PROXY_NAME}" --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null)
+ local -a netlist
+ read -ra netlist <<< "${nets}"
+ local net
+ if [[ "$1" == "prune" ]]; then
+  if [[ -z "${EASY_PROXY_NETWORK}" ]]; then
+   echo "EASY_PROXY_NETWORK is not set — refusing to prune (no edge network to keep)."
+   return 1
+  fi
+  for net in "${netlist[@]}"; do
+   if [[ "${net}" != "${EASY_PROXY_NETWORK}" ]]; then
+    echo "disconnecting ${EASY_PROXY_NAME} from ${net}"
+    docker network disconnect "${net}" "${EASY_PROXY_NAME}"
+   fi
+  done
+ else
+  echo "${EASY_PROXY_NAME} is connected to:"
+  for net in "${netlist[@]}"; do
+   if [[ "${net}" == "${EASY_PROXY_NETWORK}" ]]; then
+    echo "  ${net}  (edge)"
+   else
+    echo "  ${net}  (extra — 'easy proxy networks prune' to disconnect)"
+   fi
+  done
+ fi
 }
 
 function __easy_command_proxy_default {

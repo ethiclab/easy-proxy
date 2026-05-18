@@ -27,7 +27,7 @@ easy_setup() {
   export PATH="$MOCK_BIN:$EASY_CLI_DIR:$PATH"
 
   # Deterministic: never inherit real credentials/config from the host shell.
-  unset IONOS_API_KEY IONOS_API_SECRET EASY_LETSENCRYPT_EMAIL EASY_LETSENCRYPT_DOMAIN
+  unset IONOS_API_KEY IONOS_API_SECRET EASY_LETSENCRYPT_EMAIL EASY_LETSENCRYPT_DOMAIN EASY_PROXY_NETWORK
 }
 
 # Mock `docker` so `docker ps` reports a fake running easy-proxy container.
@@ -64,6 +64,34 @@ case "$1" in
   ps)   echo "deadbeefcafe1234" ;;
   exec) exit 1 ;;
   *)    exit 0 ;;
+esac
+MOCK
+  chmod +x "$MOCK_BIN/docker"
+}
+
+# Mock `docker` that records every invocation to $DOCKER_LOG. `ps` returns
+# nothing (proxy absent); `network inspect` fails (network absent).
+mock_docker_record() {
+  cat > "$MOCK_BIN/docker" <<'MOCK'
+#!/usr/bin/env bash
+echo "$*" >> "${DOCKER_LOG:-/dev/null}"
+case "$1 $2" in
+  "network inspect"*) exit 1 ;;
+  *)                  exit 0 ;;
+esac
+MOCK
+  chmod +x "$MOCK_BIN/docker"
+}
+
+# Mock `docker`: proxy running and joined to several networks (for `networks`).
+mock_docker_multinet() {
+  cat > "$MOCK_BIN/docker" <<'MOCK'
+#!/usr/bin/env bash
+echo "$*" >> "${DOCKER_LOG:-/dev/null}"
+case "$1 $2" in
+  "ps "*)      echo "deadbeefcafe1234" ;;
+  "inspect "*) echo "ethicnet bridge legacynet " ;;
+  *)           exit 0 ;;
 esac
 MOCK
   chmod +x "$MOCK_BIN/docker"
