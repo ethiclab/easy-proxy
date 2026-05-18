@@ -37,6 +37,9 @@ A major release: automatic Let's Encrypt SSL with multi-DNS-provider support.
 - `easy proxy create` no longer writes a state file into the install directory.
   After `npm install -g` that directory is root-owned, so non-root users got
   `Permission denied` ([#5]).
+- `easy --version` and `easy proxy help` now work before the runtime env vars
+  (`EASY_LETSENCRYPT_DIR`, `EASY_DOMAINS_DIR`) are set — they no longer fail
+  with `... is not set!`, so a freshly installed CLI can be inspected.
 - Argument quoting hardened across the `easy` dispatcher and `commands/proxy.sh`
   (ShellCheck cleanup).
 

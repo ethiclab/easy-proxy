@@ -18,6 +18,13 @@ setup() { easy_setup; }
   [[ "$output" == *"easy proxy certbot-ionos <domain>"* ]]
 }
 
+@test "easy proxy help works without the runtime env vars set" {
+  unset EASY_LETSENCRYPT_DIR EASY_DOMAINS_DIR
+  run easy proxy help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"easy proxy create"* ]]
+}
+
 @test "easy proxy with an unknown subcommand prints usage and fails" {
   run easy proxy not-a-real-subcommand
   [ "$status" -eq 1 ]
