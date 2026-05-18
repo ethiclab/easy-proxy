@@ -30,7 +30,7 @@ easy_setup() {
   unset IONOS_API_KEY IONOS_API_SECRET EASY_LETSENCRYPT_EMAIL EASY_LETSENCRYPT_DOMAIN
 }
 
-# Mock `docker` so `docker ps -q -f id=...` reports a fake running container.
+# Mock `docker` so `docker ps` reports a fake running easy-proxy container.
 # Every other docker subcommand is a no-op — tests never reach real Docker.
 mock_docker_running() {
   cat > "$MOCK_BIN/docker" <<'MOCK'
@@ -49,8 +49,9 @@ mock_pass_empty() {
   chmod +x "$MOCK_BIN/pass"
 }
 
-# Make `easy proxy status` consider the proxy "running" by writing the .id file
-# the status check reads. Pair with mock_docker_running.
-mark_proxy_running() {
-  echo "deadbeefcafe1234" > "$EASY_CLI_DIR/.id"
+# Mock `docker` with no easy-proxy container present: `ps` finds nothing and
+# every subcommand is a no-op success. Keeps tests hermetic — no real Docker.
+mock_docker_stopped() {
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$MOCK_BIN/docker"
+  chmod +x "$MOCK_BIN/docker"
 }

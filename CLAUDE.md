@@ -141,11 +141,11 @@ easy proxy status   # → container ID se running
 | `easy proxy rfc2136` | Genera cert via RFC2136/BIND DNS |
 | `easy proxy reload` | Ricarica nginx (dopo new o modifica conf) |
 | `easy proxy status` | Container ID se running, vuoto se fermo |
-| `easy proxy id` | Legge `.id` file (container ID raw) |
+| `easy proxy id` | Container ID (`docker ps` per nome `easy-proxy`, anche se fermo) |
 | `easy proxy start/stop/restart` | Ciclo container |
 | `easy proxy sh` | Shell interattiva nel container |
 | `easy proxy log` | `docker logs -f` del container |
-| `easy proxy destroy` | Stop + rm + pulizia `.id` |
+| `easy proxy destroy` | Stop + rm del container `easy-proxy` |
 
 ---
 
@@ -286,6 +286,7 @@ easy proxy create
 | Problema | Causa | Fix |
 |----------|-------|-----|
 | `easy proxy create` fallisce: porta già allocata | Container vecchio ancora running | `easy proxy destroy` poi ricrea |
+| `easy proxy create`: "already an easy proxy instance named easy-proxy" | Esiste già un container `easy-proxy` (anche solo fermo) | `easy proxy destroy` poi ricrea |
 | nginx reload fallisce: cert non trovato | `certbot-ionos` non ancora eseguito | Esegui `easy proxy certbot-ionos <domain>` prima |
 | `easy proxy new https` genera file ma reload fallisce | Cert non esiste per quel dominio | Usa `http` per test senza cert |
 | `docker exec` "not a TTY" | Solo `sh` usa `-it`, gli altri no | OK by design, non aggiungere `-it` ai comandi non-interattivi |
@@ -325,6 +326,7 @@ Principali:
 - **Alpine base** per nginx-certbot — immagine più piccola, ma richiede `user nginx;` invece di `www-data`
 - **ENTRYPOINT []** resettato in base image — altrimenti CMD viene passato come arg a certbot
 - **pass CLI** per credenziali — sicurezza > comodità env vars
+- **Container identificato per nome fisso** (`easy-proxy`), non da un file di stato `.id` — Docker è l'unica fonte di verità. Il vecchio `.id` veniva scritto nella install dir, root-owned dopo `npm install -g` → permission denied (issue #5)
 
 ---
 
