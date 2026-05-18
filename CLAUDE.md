@@ -147,6 +147,7 @@ easy proxy status   # → container ID se running
 | `easy proxy status` | Container ID se running, vuoto se fermo |
 | `easy proxy id` | Container ID (`docker ps` per nome `easy-proxy`, anche se fermo) |
 | `easy proxy doctor` | Diagnosi read-only: vhost non-standard, `nginx -t`, reti del proxy |
+| `easy proxy verify` | Verifica che il proxy sia davvero up; `create` la esegue da solo |
 | `easy proxy attach\|detach <container>` | Collega/scollega un container alla rete edge `EASY_PROXY_NETWORK` |
 | `easy proxy networks [prune]` | Mostra le reti del proxy; `prune` scollega quelle non-edge |
 | `easy proxy start/stop/restart` | Ciclo container |

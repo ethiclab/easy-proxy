@@ -104,6 +104,7 @@ Run `easy proxy help` for the full list.
 | `easy proxy status` | Container id if running, empty if stopped |
 | `easy proxy id` | Container id (running or stopped) |
 | `easy proxy doctor` | Read-only diagnostic: non-standard vhosts, `nginx -t`, proxy networks |
+| `easy proxy verify` | Check the proxy is actually running; `create` runs it automatically |
 | `easy proxy attach` / `detach <container>` | Connect/disconnect a site container to the edge network |
 | `easy proxy networks [prune]` | Show the proxy's networks; `prune` disconnects non-edge ones |
 | `easy proxy start` / `stop` / `restart` | Container lifecycle |

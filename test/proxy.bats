@@ -59,7 +59,8 @@ setup() { easy_setup; }
 }
 
 @test "easy proxy create writes no state file into the install dir (#5)" {
-  mock_docker_stopped
+  mock_docker_lifecycle
+  export DOCKER_PROXY_HEALTHY=1
   chmod -w "$EASY_CLI_DIR"
   run easy proxy create
   chmod +w "$EASY_CLI_DIR"

@@ -16,7 +16,8 @@ setup() { easy_setup; }
 @test "easy proxy create joins EASY_PROXY_NETWORK and auto-creates it" {
   export EASY_PROXY_NETWORK=ethicnet
   export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
-  mock_docker_record
+  mock_docker_lifecycle
+  export DOCKER_PROXY_HEALTHY=1
   run easy proxy create
   [ "$status" -eq 0 ]
   grep -q "network create ethicnet" "$DOCKER_LOG"
@@ -25,7 +26,8 @@ setup() { easy_setup; }
 
 @test "easy proxy create stays on the default network when EASY_PROXY_NETWORK is unset" {
   export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
-  mock_docker_record
+  mock_docker_lifecycle
+  export DOCKER_PROXY_HEALTHY=1
   run easy proxy create
   [ "$status" -eq 0 ]
   ! grep -q -- "--network" "$DOCKER_LOG"
