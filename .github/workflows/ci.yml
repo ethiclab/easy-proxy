@@ -1,10 +1,13 @@
-# CI Pipeline — ShellCheck lint
+# CI Pipeline
 # Originally metaswarm-scaffolded for a Node/TypeScript project; rewritten for
-# this Bash + Docker project. See issue #10.
+# this Bash + Docker project. See issues #10 (lint) and #7 (test suite).
 #
-# Scope: lint only. The test + coverage job is added by issue #7 (bats harness),
-# which must also handle the kcov-based enforcement command from
-# .coverage-thresholds.json.
+# Two jobs run in parallel:
+#   lint — ShellCheck over the shell sources (pinned version)
+#   test — the bats suite (test/)
+#
+# Coverage (kcov) is a local / pre-push tool — see .coverage-thresholds.json
+# and CLAUDE.md §6. kcov reports coverage; it does not gate CI.
 
 name: CI
 
@@ -34,3 +37,15 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+  test:
+    name: Bats Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bats
+        run: sudo apt-get update && sudo apt-get install -y bats
+
+      - name: Test
+        run: bats test/

@@ -4,7 +4,7 @@
   "description": "Nginx reverse proxy with Let's Encrypt SSL automation, multi-DNS provider support (IONOS, Route53, Cloudflare, DigitalOcean)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "bats test/",
     "lint": "shellcheck easy configure-local-devenv commands/*.sh easyhome/add_domain easyhome/add_subdomain_http easyhome/add_subdomain_https easyhome/easy-proxy-start easyhome/ionos-config-helper.sh .husky/pre-push"
   },
   "bin": {
