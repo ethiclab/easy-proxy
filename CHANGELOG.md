@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   vhost configs (`upstream {}` blocks, deprecated `listen ... http2`), runs the
   nginx config test when the proxy is running, and lists the proxy's Docker
   networks.
+- `EASY_PROXY_NETWORK` — when set, `easy proxy create` joins that Docker network
+  (created if missing), so recreating the proxy keeps its connectivity to the
+  backends. New commands: `easy proxy attach`/`detach <container>` to connect a
+  site to the edge network, and `easy proxy networks [prune]` to audit and clean
+  up the proxy's network membership.
 
 ## [2.0.0] — 2026-05-18
 

@@ -110,6 +110,10 @@ mkdir -p "$EASY_LETSENCRYPT_DIR" "$EASY_DOMAINS_DIR"
 
 Aggiungi queste righe a `~/.zshrc` o `~/.bashrc` per averle sempre disponibili.
 
+Opzionale — `EASY_PROXY_NETWORK`: se impostata, `easy proxy create` aggancia il
+container a quella rete Docker (creata se non esiste) e ricrearlo non perde la
+connettività verso i backend. I siti si collegano con `easy proxy attach`.
+
 ### Build immagine locale
 
 Il `Dockerfile` è self-contained (`FROM certbot/certbot:latest`): un solo build,
@@ -143,6 +147,8 @@ easy proxy status   # → container ID se running
 | `easy proxy status` | Container ID se running, vuoto se fermo |
 | `easy proxy id` | Container ID (`docker ps` per nome `easy-proxy`, anche se fermo) |
 | `easy proxy doctor` | Diagnosi read-only: vhost non-standard, `nginx -t`, reti del proxy |
+| `easy proxy attach\|detach <container>` | Collega/scollega un container alla rete edge `EASY_PROXY_NETWORK` |
+| `easy proxy networks [prune]` | Mostra le reti del proxy; `prune` scollega quelle non-edge |
 | `easy proxy start/stop/restart` | Ciclo container |
 | `easy proxy sh` | Shell interattiva nel container |
 | `easy proxy log` | `docker logs -f` del container |
