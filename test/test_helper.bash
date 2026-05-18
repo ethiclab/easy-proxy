@@ -55,3 +55,16 @@ mock_docker_stopped() {
   printf '#!/usr/bin/env bash\nexit 0\n' > "$MOCK_BIN/docker"
   chmod +x "$MOCK_BIN/docker"
 }
+
+# Mock `docker`: the proxy is running, but `docker exec` (e.g. `nginx -t`) fails.
+mock_docker_nginx_invalid() {
+  cat > "$MOCK_BIN/docker" <<'MOCK'
+#!/usr/bin/env bash
+case "$1" in
+  ps)   echo "deadbeefcafe1234" ;;
+  exec) exit 1 ;;
+  *)    exit 0 ;;
+esac
+MOCK
+  chmod +x "$MOCK_BIN/docker"
+}

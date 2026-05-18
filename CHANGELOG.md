@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `easy proxy doctor` — read-only pre-flight diagnostic. Flags non-standard
+  vhost configs (`upstream {}` blocks, deprecated `listen ... http2`), runs the
+  nginx config test when the proxy is running, and lists the proxy's Docker
+  networks.
+
 ## [2.0.0] — 2026-05-18
 
 A major release: automatic Let's Encrypt SSL with multi-DNS-provider support.

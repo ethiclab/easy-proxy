@@ -103,6 +103,7 @@ Run `easy proxy help` for the full list.
 | `easy proxy reload` | Reload nginx after adding or changing vhosts |
 | `easy proxy status` | Container id if running, empty if stopped |
 | `easy proxy id` | Container id (running or stopped) |
+| `easy proxy doctor` | Read-only diagnostic: non-standard vhosts, `nginx -t`, proxy networks |
 | `easy proxy start` / `stop` / `restart` | Container lifecycle |
 | `easy proxy sh` | Interactive shell in the container |
 | `easy proxy log` | Follow the container logs |

@@ -142,6 +142,7 @@ easy proxy status   # → container ID se running
 | `easy proxy reload` | Ricarica nginx (dopo new o modifica conf) |
 | `easy proxy status` | Container ID se running, vuoto se fermo |
 | `easy proxy id` | Container ID (`docker ps` per nome `easy-proxy`, anche se fermo) |
+| `easy proxy doctor` | Diagnosi read-only: vhost non-standard, `nginx -t`, reti del proxy |
 | `easy proxy start/stop/restart` | Ciclo container |
 | `easy proxy sh` | Shell interattiva nel container |
 | `easy proxy log` | `docker logs -f` del container |
