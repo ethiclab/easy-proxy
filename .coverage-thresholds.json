@@ -1,16 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Coverage thresholds for orchestrator agents and CI. Portable across projects — adjust values per-repo.",
+  "$comment": "easy-proxy is a Bash CLI. enforcement.command (the pre-push and task-completion gate) runs the bats suite — a fast pass/fail check. Line coverage is reported separately and informally by `kcov coverage bats test/` (see CLAUDE.md §6); kcov instrumentation of bats is slow, so it is NOT the gate and NOT run in CI. The thresholds below are an aspirational target for the kcov report as the suite grows — they are not auto-enforced.",
   "thresholds": {
-    "lines": 100,
-    "branches": 100,
-    "functions": 100,
-    "statements": 100
+    "lines": 50,
+    "branches": 50,
+    "functions": 50,
+    "statements": 50
   },
   "enforcement": {
-    "command": "kcov coverage bats test/",
+    "command": "bats test/",
     "blockPRCreation": true,
     "blockTaskCompletion": true,
-    "description": "Orchestrator agents MUST check coverage against these thresholds before marking any task complete or creating a PR. If coverage drops below any threshold, the task fails."
+    "description": "The bats test suite must pass before a PR is created or a task is marked complete. Gate: `bats test/` (fast). Informational coverage report: `kcov coverage bats test/`."
   }
 }

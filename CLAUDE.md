@@ -198,7 +198,22 @@ Guida completa: [UC1_LOCAL_SSL_SETUP.md](UC1_LOCAL_SSL_SETUP.md)
 
 ## 6. Test
 
-### Test locale (senza credenziali IONOS)
+### Test automatici (bats)
+
+```bash
+brew install bats-core kcov   # prerequisiti (una tantum)
+
+bats test/                    # esegue la suite
+npm test                      # idem, via npm script
+kcov coverage bats test/      # suite + report copertura in coverage/
+```
+
+La suite (`test/`) copre il dispatcher `easy`, il routing di `easy proxy`
+(inclusi gli error path di `certbot-ionos`, con mock di `docker`/`pass`) e il
+renderer `skeleton.js`. Gira isolata — non richiede Docker né credenziali IONOS.
+Eseguita anche dal hook `.husky/pre-push` e dalla CI.
+
+### Test manuale end-to-end (richiede Docker)
 
 ```bash
 cd ~/ethiclab/lab/easy-proxy
