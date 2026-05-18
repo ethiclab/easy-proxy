@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `easy proxy verify` — checks the proxy container is actually running and
+  surfaces the startup error if it crashed. `easy proxy create` now runs this
+  check automatically, so it no longer reports success when nginx failed to
+  start.
+
 ## [2.1.0] — 2026-05-18
 
 ### Added

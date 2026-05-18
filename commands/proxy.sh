@@ -46,6 +46,7 @@ function __easy_command_proxy_help {
  echo "    easy proxy id"
  echo "    easy proxy status"
  echo "    easy proxy doctor"
+ echo "    easy proxy verify"
  echo "    easy proxy attach <container>"
  echo "    easy proxy detach <container>"
  echo "    easy proxy networks [prune]"
@@ -230,6 +231,10 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   __easy_command_proxy_doctor
   return $?
  fi
+ if [[ "verify" == "$2" ]]; then
+  __easy_command_proxy_verify
+  return $?
+ fi
  if [[ "attach" == "$2" ]]; then
   __easy_command_proxy_attach "$3"
   return $?
@@ -249,6 +254,23 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   __easy_command_proxy_help
   return 1
  fi
+}
+
+# Check the proxy container is actually running; on failure surface the reason.
+function __easy_command_proxy_verify {
+ if [[ -n "$(easy proxy status)" ]]; then
+  echo "easy proxy: running"
+  return 0
+ fi
+ echo "easy proxy: NOT running"
+ if [[ -n "$(easy proxy id)" ]]; then
+  echo "the container exited — last log lines:"
+  docker logs --tail 15 "${EASY_PROXY_NAME}" 2>&1 | sed 's/^/  /'
+  echo "fix the cause, then 'easy proxy destroy' and 'easy proxy create' again."
+ else
+  echo "no ${EASY_PROXY_NAME} container — run 'easy proxy create'."
+ fi
+ return 1
 }
 
 function __easy_command_proxy_create {
@@ -278,8 +300,11 @@ function __easy_command_proxy_create {
  -v "${EASY_DIR}/easyhome:/usr/local/share/easy" \
  -p 80:80 \
  -p 443:443 \
- -t ethiclab/nginx-easy
- return $?
+ -t ethiclab/nginx-easy || return $?
+ # `docker run` only starts the container — nginx can still crash on a bad
+ # config. Give it a moment, then verify the proxy is actually serving.
+ sleep "${EASY_VERIFY_DELAY:-2}"
+ __easy_command_proxy_verify
 }
 
 # Read-only pre-flight diagnostic: static vhost analysis (host-side) plus,

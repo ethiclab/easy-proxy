@@ -28,6 +28,30 @@ easy_setup() {
 
   # Deterministic: never inherit real credentials/config from the host shell.
   unset IONOS_API_KEY IONOS_API_SECRET EASY_LETSENCRYPT_EMAIL EASY_LETSENCRYPT_DOMAIN EASY_PROXY_NETWORK
+  # Skip the post-create verify wait — the mocks settle instantly.
+  export EASY_VERIFY_DELAY=0
+}
+
+# Stateful `docker` mock for `create` + `verify`. `run` marks the container
+# created; `ps -a` (id) then reports it; `ps` (running) reports it only when
+# DOCKER_PROXY_HEALTHY is set — leave it unset to simulate a startup crash.
+mock_docker_lifecycle() {
+  export DOCKER_STATE="$BATS_TEST_TMPDIR/docker-state"
+  rm -f "$DOCKER_STATE"
+  cat > "$MOCK_BIN/docker" <<'MOCK'
+#!/usr/bin/env bash
+echo "$*" >> "${DOCKER_LOG:-/dev/null}"
+case "$1 $2" in
+  "run "*)            echo created > "$DOCKER_STATE"; echo "deadbeefcafe1234" ;;
+  "ps -a"*)           [ -f "$DOCKER_STATE" ] && echo "deadbeefcafe1234" ;;
+  "ps "*)             { [ -f "$DOCKER_STATE" ] && [ -n "$DOCKER_PROXY_HEALTHY" ]; } && echo "deadbeefcafe1234" ;;
+  "logs "*)           echo 'nginx: [emerg] host not found in upstream "x"' ;;
+  "network inspect"*) exit 1 ;;
+  "stop "*|"rm "*)    rm -f "$DOCKER_STATE" ;;
+  *)                  exit 0 ;;
+esac
+MOCK
+  chmod +x "$MOCK_BIN/docker"
 }
 
 # Mock `docker` so `docker ps` reports a fake running easy-proxy container.
