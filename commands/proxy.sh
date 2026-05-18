@@ -45,6 +45,7 @@ function __easy_command_proxy_help {
  echo "    easy proxy new"
  echo "    easy proxy id"
  echo "    easy proxy status"
+ echo "    easy proxy doctor"
  echo "    easy proxy start"
  echo "    easy proxy stop"
  echo "    easy proxy destroy"
@@ -222,6 +223,10 @@ chmod 600 /etc/letsencrypt/ionos.ini"
   docker ps -q -f "name=^${EASY_PROXY_NAME}$" 2>/dev/null
   return $?
  fi
+ if [[ "doctor" == "$2" ]]; then
+  __easy_command_proxy_doctor
+  return $?
+ fi
  if [[ -z "$2" ]]; then
   __easy_command_proxy_default
   return $?
@@ -249,6 +254,70 @@ function __easy_command_proxy_create {
  -p 443:443 \
  -t ethiclab/nginx-easy
  return $?
+}
+
+# Read-only pre-flight diagnostic: static vhost analysis (host-side) plus,
+# when the proxy is running, the nginx config test and the network list.
+# Exits non-zero only when nginx -t fails (a definite startup blocker).
+function __easy_command_proxy_doctor {
+ echo "easy proxy doctor — pre-flight check"
+ echo
+ local warnings=0
+
+ # vhost configs — static analysis, host-side (no Docker needed)
+ echo "vhost configs (${EASY_DOMAINS_DIR}):"
+ local confs
+ confs=$(find "${EASY_DOMAINS_DIR}" -type f -name '*.conf' 2>/dev/null | sort)
+ if [[ -z "${confs}" ]]; then
+  echo "  no vhost files found"
+ else
+  echo "  $(printf '%s\n' "${confs}" | wc -l | tr -d ' ') vhost file(s)"
+  local conf
+  while IFS= read -r conf; do
+   if grep -qE '^[[:space:]]*upstream[[:space:]]' "${conf}"; then
+    echo "  WARN ${conf}"
+    echo "       static 'upstream {}' block — resolved at nginx startup; one"
+    echo "       unresolvable host blocks every site. Convert to a variable:"
+    echo "       set \$u <host>; proxy_pass http://\$u;"
+    warnings=$((warnings + 1))
+   fi
+   if grep -qE 'listen[^;]*http2' "${conf}"; then
+    echo "  WARN ${conf}"
+    echo "       deprecated 'listen ... http2' — use the 'http2 on;' directive"
+    warnings=$((warnings + 1))
+   fi
+  done <<< "${confs}"
+ fi
+ echo
+
+ # runtime checks — need the running container
+ local proxy_running
+ proxy_running=$(easy proxy status)
+
+ echo "nginx config test:"
+ local nginx_failed=0
+ if [[ -z "${proxy_running}" ]]; then
+  echo "  skipped — proxy not running ('easy proxy create' first)"
+ elif docker exec "${EASY_PROXY_NAME}" nginx -t -c /usr/local/share/easy/nginx.conf >/dev/null 2>&1; then
+  echo "  PASS"
+ else
+  echo "  FAIL — details: docker exec ${EASY_PROXY_NAME} nginx -t"
+  nginx_failed=1
+ fi
+ echo
+
+ echo "proxy networks:"
+ if [[ -z "${proxy_running}" ]]; then
+  echo "  skipped — proxy not running"
+ else
+  local nets
+  nets=$(docker inspect "${EASY_PROXY_NAME}" --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null)
+  echo "  ${nets:-(none)}"
+ fi
+ echo
+
+ echo "summary: ${warnings} warning(s)"
+ return "${nginx_failed}"
 }
 
 function __easy_command_proxy_default {
