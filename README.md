@@ -51,9 +51,9 @@ easy proxy create     # start the proxy on :80 and :443
 easy proxy status     # prints the container id when running
 ```
 
-> **Note — v2.0.0 is in active development.** `easy proxy build` builds the
-> `ethiclab/nginx-easy` image locally from a single self-contained `Dockerfile`
-> (`FROM certbot/certbot:latest`) — no custom base image and no registry needed.
+> **Note.** `easy proxy build` builds the `ethiclab/nginx-easy` image locally
+> from a single self-contained `Dockerfile` (`FROM certbot/certbot:latest`) — no
+> custom base image and no registry needed.
 
 ## Quick start — HTTP
 
