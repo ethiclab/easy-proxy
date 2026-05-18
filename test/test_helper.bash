@@ -27,7 +27,7 @@ easy_setup() {
   export PATH="$MOCK_BIN:$EASY_CLI_DIR:$PATH"
 
   # Deterministic: never inherit real credentials/config from the host shell.
-  unset IONOS_API_KEY IONOS_API_SECRET EASY_LETSENCRYPT_EMAIL EASY_LETSENCRYPT_DOMAIN EASY_PROXY_NETWORK
+  unset IONOS_API_KEY IONOS_API_SECRET EASY_LETSENCRYPT_EMAIL EASY_LETSENCRYPT_DOMAIN EASY_PROXY_NETWORK EASY_PROXY_DOCKER_RUN_OPTS
   # Skip the post-create verify wait — the mocks settle instantly.
   export EASY_VERIFY_DELAY=0
 }
