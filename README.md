@@ -1,126 +1,146 @@
-# inspired by
+# easy-proxy
 
-This project was initially based on https://github.com/jwilder/nginx-proxy 
+> A CLI for running an nginx reverse proxy with automatic Let's Encrypt SSL — no
+> hand-edited nginx config, no manual certificate juggling.
 
-# what
+`easy-proxy` (npm: [`@ethiclab/easy-cli`](https://www.npmjs.com/package/@ethiclab/easy-cli))
+runs an nginx + certbot container and lets you add reverse-proxy vhosts and
+obtain wildcard HTTPS certificates from a single command.
 
-The idea behind this project is to be able to provision web interfaces and expose them through a reverse proxy by using a CLI interface.
+## What it does
 
-If you are a network administrator within your company, or if you only need to setup a test environment, this proxy can be useful.
+Say you have services running on local ports — a dashboard on `:8080`, an API on
+`:8081` — and you want to reach them at real hostnames over HTTPS
+(`app.example.com`, `api.example.com`) instead of `localhost:8080`.
 
-For instance, let's say that you have a joomla server running on port 8888 somewhere in your network, for instance at address 192.168.1.123, and let's say that you have an http server running on port 80 in a server that is configured to be reached from internet by accessing the root domain example.com as well as the subdomains; for instance, a.example.com, b.example.com, etc.
+`easy-proxy`:
 
-If you want to expose your joomla instance, you have to setup a reverse proxy within the exposed http server so that every request to myjoomla.example.com, for instance, is transparently forwarded to 192.168.1.123:8888
+1. runs an nginx reverse proxy in Docker (ports 80/443);
+2. generates nginx vhosts from templates — `easy proxy new http|https ...`;
+3. obtains Let's Encrypt SSL certificates via the DNS-01 challenge, automated for
+   supported DNS providers (IONOS, Route53, Cloudflare, DigitalOcean, RFC2136).
 
-In order to do that you have to manually edit nginx configuration or add a manually created file within the sites-available folder.
+No nginx configuration files to edit by hand.
 
-Things get more complicated if you want to use SSL.
+## Requirements
 
-This project tries to solve this by providing a CLI interface that allows you to provision a new subdomain site without editing any nginx configuration file manually.
+- **Docker** 20.10+
+- **Node.js** — the CLI ships as an npm package
 
-# getting started
+## Installation
 
-    npm install -g @ethiclab/easy-cli
-    easy
-
-You should see and output like:
-
-    2019-08-12 15:35:44.117224966 - [INFO ] - found EASY_DIR=/home/montoyaedu/docker-nginx-http-proxy
-    2019-08-12 15:35:44.120070955 - [INFO ] - EASY_LETSENCRYPT_DIR is not set!
-
-Just define the following environment variables into your profile file:
-
-    export EASY_LETSENCRYPT_DIR=/some_persistent_backed_up_folder
-    export EASY_DOMAINS_DIR=/some_other_persistent_backed_up_folder
-
-Then when you execute the `easy` command you get:
-
-    2019-08-12 15:37:14.923010417 - [INFO ] - found EASY_DIR=/home/montoyaedu/docker-nginx-http-proxy
-    2019-08-12 15:37:14.926147567 - [INFO ] - Invalid command: 
-    2019-08-12 15:37:14.928410671 - [INFO ] - Available commands are:
-	proxy
-
-# help
-
-For obtaining a list of possible commands that you can use with `easy proxy` you can try the command `easy proxy help`
-
-    easy proxy help
-    usage:
-        easy proxy create
-        easy proxy sh
-        easy proxy log
-        easy proxy build
-        easy proxy new
-        easy proxy id
-        easy proxy status
-        easy proxy start
-        easy proxy stop
-        easy proxy destroy
-        easy proxy restart
-        easy proxy reload
-        easy proxy certbot
-        easy proxy rfc2136
-        easy proxy help
-
-# easy proxy create
-
-The command `easy proxy create` creates and starts the nginx proxy.
-
-If you obtain something like:
-
-    easy proxy
-    Unable to find image 'ethiclab/nginx-easy:latest' locally
-    docker: Error response from daemon: manifest for ethiclab/nginx-easy:latest not found.
-    See 'docker run --help'.
-    
-It means that you need to build the docker image first. Please execute the following command first:
-
-    easy proxy build
-
-# start nginx proxy (needs docker)
-
-    easy proxy
-    docker network create network1
-    docker run -d --name server1 nginx
-    docker network connect network1 $(easy proxy status)
-    docker network connect network1 server1
-    easy proxy new http server1.example.com example.com http://server1
-    easy proxy reload
-
-now visit: http://server1.example.com
-
-IMPORTANT: Remember that server1.example.com must resolve to the ip address where the proxy is running.
-
-# development
-
-## link easy with your local working folder
-
-    git clone git@github.com:ethiclab/docker-nginx-http-proxy.git
-    cd docker-nginx-http-proxy
-    . ./configure-local-devenv
-
-## start a local dns
-
-    docker run -d -p 53:53/tcp -p 53:53/udp -p10000:10000/tcp sameersbn/bind
-
-## visit webmin
-
-  open https://localhost:10000
-  with user root and password password
-  
-configure a new domain with wildcard support.
-
-## Mac OSX
-
-    networksetup -listallnetworkservices
-    networksetup -getdnsservers <networkservice>
-    networksetup -setdnsservers <networkservice> <dns1> [dns2] [...]
-    
-## How to publish npm package
-
-```
-npm login
-
-npm publish
+```bash
+npm install -g @ethiclab/easy-cli
 ```
 
+Set these environment variables (add them to `~/.zshrc` or `~/.bashrc` so they
+persist):
+
+```bash
+export EASY_LETSENCRYPT_DIR="$HOME/.easy-proxy/letsencrypt"   # certificates (persistent)
+export EASY_DOMAINS_DIR="$HOME/.easy-proxy/domains"           # generated vhosts
+export EASY_LETSENCRYPT_EMAIL="you@example.com"               # Let's Encrypt account email
+mkdir -p "$EASY_LETSENCRYPT_DIR" "$EASY_DOMAINS_DIR"
+```
+
+Then build the image and start the proxy:
+
+```bash
+easy proxy build      # build the ethiclab/nginx-easy image
+easy proxy create     # start the proxy on :80 and :443
+easy proxy status     # prints the container id when running
+```
+
+> **Note — v2.0.0 is in active development.** The Docker images
+> (`ethiclab/nginx-certbot:2.0`, `ethiclab/nginx-easy`) are not yet published to
+> a registry, so they must be built locally. See [CLAUDE.md](CLAUDE.md) for the
+> full build steps, including the base image.
+
+## Quick start — HTTP
+
+```bash
+easy proxy create
+easy proxy new http app.example.com example.com http://host.docker.internal:8080
+easy proxy reload
+```
+
+`http://app.example.com` is now proxied to your service on port 8080.
+`app.example.com` must resolve to the host running the proxy — via DNS, or via
+`/etc/hosts` for local testing.
+
+## Quick start — HTTPS with Let's Encrypt
+
+Obtain a wildcard certificate for your domain via the DNS-01 challenge, then add
+an HTTPS vhost. Example with IONOS:
+
+```bash
+# IONOS API credentials — via environment variables...
+export IONOS_API_KEY="..."
+export IONOS_API_SECRET="..."
+# ...or via the `pass` password manager:
+#   pass insert ionos/api-key
+#   pass insert ionos/api-secret
+
+easy proxy certbot-ionos example.com     # wildcard cert: example.com + *.example.com
+easy proxy new https app.example.com example.com http://host.docker.internal:8080
+easy proxy reload
+```
+
+For manual DNS-01 with any provider use `easy proxy certbot`; for RFC2136/BIND
+use `easy proxy rfc2136`.
+
+## Commands
+
+Run `easy proxy help` for the full list.
+
+| Command | Description |
+|---|---|
+| `easy proxy create` | Start the proxy container on ports 80/443 |
+| `easy proxy build` | Build the `ethiclab/nginx-easy` image |
+| `easy proxy new http\|https <fqdn> <domain> <target>` | Add a reverse-proxy vhost |
+| `easy proxy certbot-ionos <domain>` | Wildcard SSL cert via IONOS DNS-01 (automated) |
+| `easy proxy certbot` | SSL cert via manual DNS-01 (interactive) |
+| `easy proxy rfc2136` | SSL cert via RFC2136/BIND DNS |
+| `easy proxy reload` | Reload nginx after adding or changing vhosts |
+| `easy proxy status` | Container id if running, empty if stopped |
+| `easy proxy id` | Container id (running or stopped) |
+| `easy proxy start` / `stop` / `restart` | Container lifecycle |
+| `easy proxy sh` | Interactive shell in the container |
+| `easy proxy log` | Follow the container logs |
+| `easy proxy destroy` | Stop and remove the container |
+
+## Upgrading to 2.0
+
+`2.0.0` is a major release with breaking changes from `1.x`:
+
+- **Container identity.** The proxy container is identified by the fixed name
+  `easy-proxy` instead of a `.id` state file. A container created by `1.x` is
+  not visible to `2.0` — remove it with `docker rm -f <container>` and run
+  `easy proxy create` again.
+- **Docker base image.** Upgraded to `ethiclab/nginx-certbot:2.0`. Run
+  `easy proxy build` to rebuild.
+- **Template engine.** Rewritten from Python 2 to Node.js (internal).
+
+See **[CHANGELOG.md](CHANGELOG.md)** for the full history.
+
+## Development
+
+```bash
+git clone git@github.com:ethiclab/easy-proxy.git
+cd easy-proxy
+. ./configure-local-devenv     # put the repo on PATH
+
+npm test                       # bats test suite
+npm run lint                    # ShellCheck
+```
+
+The full developer guide — architecture, the IONOS automation flow, gotchas — is
+in **[CLAUDE.md](CLAUDE.md)**.
+
+## Credits
+
+Originally inspired by [jwilder/nginx-proxy](https://github.com/jwilder/nginx-proxy).
+
+## License
+
+MIT
