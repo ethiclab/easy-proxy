@@ -1,6 +1,6 @@
 {
   "name": "@ethiclab/easy-cli",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Nginx reverse proxy with Let's Encrypt SSL automation, multi-DNS provider support (IONOS, Route53, Cloudflare, DigitalOcean)",
   "files": [
     "easy",
