@@ -114,6 +114,10 @@ Opzionale — `EASY_PROXY_NETWORK`: se impostata, `easy proxy create` aggancia i
 container a quella rete Docker (creata se non esiste) e ricrearlo non perde la
 connettività verso i backend. I siti si collegano con `easy proxy attach`.
 
+Opzionale — `EASY_PROXY_DOCKER_RUN_OPTS`: opzioni extra passate al `docker run`
+di `easy proxy create` (porte aggiuntive, limiti di risorse, ecc.). Es:
+`export EASY_PROXY_DOCKER_RUN_OPTS="-p 8089:8089"`.
+
 ### Build immagine locale
 
 Il `Dockerfile` è self-contained (`FROM certbot/certbot:latest`): un solo build,

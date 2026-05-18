@@ -368,6 +368,9 @@ function __easy_command_proxy_create {
   fi
   network_args=(--network "${EASY_PROXY_NETWORK}")
  fi
+ # Extra `docker run` options the operator wants (extra ports, limits, ...).
+ local run_opts=()
+ read -ra run_opts <<< "${EASY_PROXY_DOCKER_RUN_OPTS}"
  docker run -d \
  --name "${EASY_PROXY_NAME}" \
  "${network_args[@]}" \
@@ -376,6 +379,7 @@ function __easy_command_proxy_create {
  -v "${EASY_DIR}/easyhome:/usr/local/share/easy" \
  -p 80:80 \
  -p 443:443 \
+ "${run_opts[@]}" \
  -t ethiclab/nginx-easy || return $?
  # `docker run` only starts the container — nginx can still crash on a bad
  # config. Give it a moment, then verify the proxy is actually serving.
