@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC1001,SC1090,SC2046,SC2086,SC2155,SC2164
-# Pre-existing findings baselined for incremental ShellCheck adoption — see #8.
 DATE=$(which date)
 GDATE=$(which gdate 2>/dev/null)
 if [ -x "$GDATE" ]; then
@@ -8,7 +6,7 @@ if [ -x "$GDATE" ]; then
 fi
 
 function LOG_INFO {
-    >&2 echo "$($DATE +"%F %T.%N") - [INFO ] - $*"
+    >&2 echo "$("$DATE" +"%F %T.%N") - [INFO ] - $*"
 }
 
 if [[ -z "$(which easy)" ]]; then
@@ -16,7 +14,8 @@ if [[ -z "$(which easy)" ]]; then
   exit 1
 fi
 
-export EASY_DIR=$(dirname $(realpath $(which easy)))
+EASY_DIR=$(dirname "$(realpath "$(which easy)")")
+export EASY_DIR
 
 if [[ ! -d "${EASY_DIR}" ]]; then
   LOG_INFO "EASY_DIR=${EASY_DIR} is not valid!"
@@ -35,24 +34,24 @@ function easy_verify_dir {
   fi
 }
 
-easy_verify_dir EASY_LETSENCRYPT_DIR $EASY_LETSENCRYPT_DIR
-easy_verify_dir EASY_DOMAINS_DIR $EASY_DOMAINS_DIR
+easy_verify_dir EASY_LETSENCRYPT_DIR "$EASY_LETSENCRYPT_DIR"
+easy_verify_dir EASY_DOMAINS_DIR "$EASY_DOMAINS_DIR"
 
 D="${EASY_DIR}/commands"
 function __private_easy_usage {
  LOG_INFO "Invalid command: $1"
  LOG_INFO "Available switches are:"
- >&2 printf '\t%s\n' "--version" 
+ >&2 printf '\t%s\n' "--version"
  LOG_INFO "Available commands are:"
- cd $D
+ cd "$D" || return 1
  for f in *; do
   >&2 printf '\t%s\n' "${f%.*}"
  done
 }
 
 function __private_easy_version {
- cat ${EASY_DIR}/package.json \
- | grep \"version\"\: \
+ cat "${EASY_DIR}/package.json" \
+ | grep '"version":' \
  | cut -d ',' -f 1 \
  | cut -d ':' -f 2 \
  | cut -d ' ' -f 2 \
@@ -64,7 +63,7 @@ function easy {
  C="$1"
  # no command provided
  if [[ -z "$C" ]]; then
-  __private_easy_usage $C
+  __private_easy_usage "$C"
   return 1
  fi
  # Check if it is a valid command
@@ -89,7 +88,8 @@ function easy {
   if [[ -f "$C_SH" ]]; then
    C_OK="$C_SH"
 
-   source ${C_SH}
+   # shellcheck source=/dev/null
+   source "${C_SH}"
 
    # Check whether the command
    # exists as an internal
@@ -113,7 +113,7 @@ function easy {
  fi
  # couldn't find the command
  if [[ -z "$C_OK" ]]; then
-  __private_easy_usage $C
+  __private_easy_usage "$C"
   return 1
  fi
 }

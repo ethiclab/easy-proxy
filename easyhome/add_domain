@@ -1,6 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2086
-# Pre-existing finding baselined for incremental ShellCheck adoption — see #8.
 /usr/local/share/easy/skeleton.py \
-  --domain $1 \
-  > /usr/local/share/easy/$1.conf
+  --domain "$1" \
+  > "/usr/local/share/easy/$1.conf"
