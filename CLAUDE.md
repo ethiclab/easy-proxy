@@ -1,7 +1,7 @@
 # easy-proxy — CLAUDE.md
 
 > Nginx reverse proxy CLI con Let's Encrypt SSL automation e multi-DNS provider.
-> Stato: **ATTIVO** — v2.1.0
+> Stato: **ATTIVO** — v2.2.0
 > Ultimo aggiornamento: 2026-05-18
 
 ---
