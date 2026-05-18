@@ -24,14 +24,14 @@ Versione: 2.0.0 | Stack: bash, Node.js 20, nginx 1.26, certbot, Docker Alpine.
 | `commands/proxy.sh` | Tutti i comandi `easy proxy *` |
 | `easyhome/skeleton.js` | Renderer template nginx (zero deps, Node.js) |
 | `easyhome/ionos-config-helper.sh` | Genera credenziali certbot-dns-ionos |
-| `Dockerfile.build` | Build base image (aggiungere DNS providers qui) |
+| `Dockerfile` | Build immagine `nginx-easy`, self-contained (aggiungere DNS providers qui) |
 
 ## Aggiungere un DNS provider (template)
 
-1. `Dockerfile.build` → `pip install certbot-dns-<provider>`
+1. `Dockerfile` → `pip install certbot-dns-<provider>`
 2. `commands/proxy.sh` → aggiungi `if [[ "certbot-<provider>" == "$2" ]]` (copia da `certbot-ionos`)
 3. `easyhome/<provider>-config-helper.sh` → crea file credenziali con `chmod 600`
-4. Rebuild: `docker build -f Dockerfile.build -t ethiclab/nginx-certbot:2.0 .`
+4. Rebuild: `easy proxy build`
 
 ## Test rapido (senza credenziali)
 

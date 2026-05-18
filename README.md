@@ -51,10 +51,9 @@ easy proxy create     # start the proxy on :80 and :443
 easy proxy status     # prints the container id when running
 ```
 
-> **Note — v2.0.0 is in active development.** The Docker images
-> (`ethiclab/nginx-certbot:2.0`, `ethiclab/nginx-easy`) are not yet published to
-> a registry, so they must be built locally. See [CLAUDE.md](CLAUDE.md) for the
-> full build steps, including the base image.
+> **Note — v2.0.0 is in active development.** `easy proxy build` builds the
+> `ethiclab/nginx-easy` image locally from a single self-contained `Dockerfile`
+> (`FROM certbot/certbot:latest`) — no custom base image and no registry needed.
 
 ## Quick start — HTTP
 
@@ -117,8 +116,8 @@ Run `easy proxy help` for the full list.
   `easy-proxy` instead of a `.id` state file. A container created by `1.x` is
   not visible to `2.0` — remove it with `docker rm -f <container>` and run
   `easy proxy create` again.
-- **Docker base image.** Upgraded to `ethiclab/nginx-certbot:2.0`. Run
-  `easy proxy build` to rebuild.
+- **Docker image.** Rebuilt from scratch on `certbot/certbot:latest`, with nginx
+  and the DNS provider plugins. Run `easy proxy build` to rebuild.
 - **Template engine.** Rewritten from Python 2 to Node.js (internal).
 
 See **[CHANGELOG.md](CHANGELOG.md)** for the full history.

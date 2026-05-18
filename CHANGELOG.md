@@ -24,8 +24,10 @@ A major release: automatic Let's Encrypt SSL with multi-DNS-provider support.
   fixed Docker name `easy-proxy`, queried directly from Docker, instead of a
   `.id` state file. A container created by `1.x` is not visible to `2.0`: remove
   it with `docker rm -f <container>` and run `easy proxy create` again ([#5]).
-- **BREAKING — Docker base image.** Upgraded to `ethiclab/nginx-certbot:2.0`
-  (Alpine, nginx 1.26, Node 20, certbot + DNS plugins). Run `easy proxy build`
+- **BREAKING — Docker image.** The container image is rebuilt from scratch on
+  `certbot/certbot:latest` — a single self-contained `Dockerfile` adds nginx,
+  Node and the certbot DNS plugins. `easy proxy build` produces it with one
+  `docker build`, with no custom base image required. Run `easy proxy build`
   to rebuild.
 - Template engine rewritten from Python 2 (`skeleton.py`) to a zero-dependency
   Node.js renderer (`skeleton.js`).

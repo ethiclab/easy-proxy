@@ -29,8 +29,7 @@ easy-proxy/
 │   ├── add_subdomain_https    # Genera vhost HTTPS
 │   ├── ionos-config-helper.sh # Helper credenziali IONOS
 │   └── easy-proxy-start       # Entrypoint container
-├── Dockerfile                 # Container easy-proxy (usa base v2.0)
-├── Dockerfile.build           # Build base image nginx-certbot:2.0
+├── Dockerfile                 # Build immagine nginx-easy, self-contained
 ├── CLAUDE.md                  # Guida per Claude Code
 ├── STATE.md                   # WIP corrente
 ├── UC1_LOCAL_SSL_SETUP.md     # Quick start UC1
@@ -42,16 +41,15 @@ easy-proxy/
 ## Stato attuale (2026-04-02)
 
 ### Già fatto ✅
-- Base image `ethiclab/nginx-certbot:2.0` costruita (Alpine + nginx 1.26 + certbot-dns-ionos + Node 20)
+- Immagine `ethiclab/nginx-easy` da `Dockerfile` self-contained (`FROM certbot/certbot:latest` — nginx + certbot DNS plugins + Node 20)
 - `easy proxy certbot-ionos <domain>` implementato — legge credenziali da `pass` o env vars
 - `skeleton.py` (Python 2) rimpiazzato da `skeleton.js` (Node.js, zero dipendenze)
 - Tutti i test locali passano
 
 ### Da fare 🔴
-1. **Push Docker Hub**: `docker push ethiclab/nginx-certbot:2.0`
-2. **Test reale IONOS**: serve `pass insert ionos/api-key` + `pass insert ionos/api-secret`
-3. **Split-view DNS** (Phase 2): dnsmasq locale per `*.dev.ethiclab.it → 127.0.0.1`
-4. **Register.it support** (Phase 3): plugin certbot-dns-register-it
+1. **Test reale IONOS**: serve `pass insert ionos/api-key` + `pass insert ionos/api-secret`
+2. **Split-view DNS** (Phase 2): dnsmasq locale per `*.dev.ethiclab.it → 127.0.0.1`
+3. **Register.it support** (Phase 3): plugin certbot-dns-register-it
 
 ---
 
@@ -64,7 +62,7 @@ easy-proxy/
 
 ### Aggiungere un nuovo DNS provider
 
-1. Aggiungere plugin nel `Dockerfile.build`:
+1. Aggiungere plugin nel `Dockerfile`:
    ```dockerfile
    pip install certbot-dns-<provider>
    ```
@@ -108,9 +106,9 @@ easy proxy destroy
 ## Architettura del container
 
 ```
-ethiclab/nginx-easy  (FROM ethiclab/nginx-certbot:2.0)
+ethiclab/nginx-easy  (FROM certbot/certbot:latest)
  │
- ├─ nginx 1.26.3 (user: nginx, config: /usr/local/share/easy/nginx.conf)
+ ├─ nginx (user: nginx, config: /usr/local/share/easy/nginx.conf)
  │   └─ include /domains/*/*.conf  ← vhost generati da skeleton.js
  │
  ├─ certbot 5.4.0
