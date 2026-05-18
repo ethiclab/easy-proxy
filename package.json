@@ -16,7 +16,7 @@
     "lint": "shellcheck easy configure-local-devenv commands/*.sh easyhome/add_domain easyhome/add_subdomain_http easyhome/add_subdomain_https easyhome/easy-proxy-start easyhome/ionos-config-helper.sh .husky/pre-push"
   },
   "bin": {
-    "easy": "./easy"
+    "easy": "easy"
   },
   "engines": {
     "node": ">=14.0.0"
