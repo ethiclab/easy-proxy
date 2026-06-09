@@ -100,7 +100,7 @@ function __easy_command_proxy {
    echo "Invalid Domain. Set environment variable EASY_LETSENCRYPT_DOMAIN"
    return 1
   fi
-  docker exec -it "${EASY_PROXY_NAME}" sudo certbot --email "${EASY_LETSENCRYPT_EMAIL}" --agree-tos --manual-public-ip-logging-ok certonly --manual --preferred-challenges dns -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}"
+  docker exec -it "${EASY_PROXY_NAME}" sudo certbot --email "${EASY_LETSENCRYPT_EMAIL}" --agree-tos certonly --manual --preferred-challenges dns -d "${EASY_LETSENCRYPT_DOMAIN},*.${EASY_LETSENCRYPT_DOMAIN}"
   return $?
  fi
  if [[ "certbot-ionos" == "$2" ]]; then
@@ -154,7 +154,7 @@ chmod 600 /etc/letsencrypt/ionos.ini"
    --non-interactive \
    --agree-tos \
    --email "${EASY_LETSENCRYPT_EMAIL}" \
-   --dns-ionos \
+   --authenticator dns-ionos \
    --dns-ionos-credentials /etc/letsencrypt/ionos.ini \
    -d "${domain}" -d "*.${domain}"
 

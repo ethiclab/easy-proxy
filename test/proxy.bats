@@ -92,3 +92,25 @@ setup() { easy_setup; }
   [ "$status" -eq 1 ]
   [[ "$output" == *"IONOS API credentials not found"* ]]
 }
+
+@test "easy proxy certbot-ionos selects the plugin with --authenticator (not the ambiguous --dns-ionos)" {
+  export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
+  mock_docker_running_record
+  export EASY_LETSENCRYPT_EMAIL="test@example.com"
+  export IONOS_API_KEY="key" IONOS_API_SECRET="secret"
+  run easy proxy certbot-ionos example.com
+  [ "$status" -eq 0 ]
+  # The bare --dns-ionos selector is ambiguous on modern certbot; must use --authenticator.
+  grep -q -- "--authenticator dns-ionos" "$DOCKER_LOG"
+  ! grep -Eq -- "--dns-ionos( |$)" "$DOCKER_LOG"
+}
+
+@test "easy proxy certbot does not pass the removed --manual-public-ip-logging-ok flag" {
+  export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
+  mock_docker_running_record
+  export EASY_LETSENCRYPT_EMAIL="test@example.com"
+  export EASY_LETSENCRYPT_DOMAIN="example.com"
+  run easy proxy certbot
+  [ "$status" -eq 0 ]
+  ! grep -q -- "--manual-public-ip-logging-ok" "$DOCKER_LOG"
+}
