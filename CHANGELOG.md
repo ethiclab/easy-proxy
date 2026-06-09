@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.1] — 2026-06-09
+
+### Fixed
+
+- `easy proxy certbot-ionos` — select the DNS plugin with `--authenticator
+  dns-ionos` instead of the bare `--dns-ionos` flag. On recent certbot the bare
+  flag is an ambiguous prefix of `--dns-ionos-credentials` /
+  `--dns-ionos-propagation-seconds` and the command aborted with
+  `ambiguous option: --dns-ionos`.
+- `easy proxy certbot` — drop the `--manual-public-ip-logging-ok` flag, removed
+  from modern certbot. It caused `unrecognized arguments`. IP-logging consent is
+  no longer prompted, so the flag is obsolete.
+
 ## [2.3.0] — 2026-05-19
 
 ### Added

@@ -67,6 +67,20 @@ MOCK
   chmod +x "$MOCK_BIN/docker"
 }
 
+# Mock `docker`: the proxy is running AND every invocation is logged to
+# $DOCKER_LOG. Lets a test assert the exact certbot flags passed via `docker exec`.
+mock_docker_running_record() {
+  cat > "$MOCK_BIN/docker" <<'MOCK'
+#!/usr/bin/env bash
+echo "$*" >> "${DOCKER_LOG:-/dev/null}"
+case "$1" in
+  ps) echo "deadbeefcafe1234" ;;
+  *)  exit 0 ;;
+esac
+MOCK
+  chmod +x "$MOCK_BIN/docker"
+}
+
 # Mock `pass` so credential lookups always miss (no stored secrets).
 mock_pass_empty() {
   printf '#!/usr/bin/env bash\nexit 1\n' > "$MOCK_BIN/pass"
