@@ -105,6 +105,20 @@ setup() { easy_setup; }
   ! grep -Eq -- "--dns-ionos( |$)" "$DOCKER_LOG"
 }
 
+@test "easy proxy certbot-ionos writes ionos.ini in the prefix/secret/endpoint format" {
+  export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
+  mock_docker_running_record
+  export EASY_LETSENCRYPT_EMAIL="test@example.com"
+  export IONOS_API_KEY="key" IONOS_API_SECRET="secret"
+  run easy proxy certbot-ionos example.com
+  [ "$status" -eq 0 ]
+  # Modern certbot-dns-ionos requires these keys; the legacy api_key/api_secret are gone.
+  grep -q -- "dns_ionos_prefix = key" "$DOCKER_LOG"
+  grep -q -- "dns_ionos_secret = secret" "$DOCKER_LOG"
+  grep -q -- "dns_ionos_endpoint = https://api.hosting.ionos.com" "$DOCKER_LOG"
+  ! grep -q -- "dns_ionos_api_key" "$DOCKER_LOG"
+}
+
 @test "easy proxy certbot does not pass the removed --manual-public-ip-logging-ok flag" {
   export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
   mock_docker_running_record

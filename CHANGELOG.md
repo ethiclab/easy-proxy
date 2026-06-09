@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.2] — 2026-06-09
+
+### Fixed
+
+- `easy proxy certbot-ionos` — write `ionos.ini` in the format the current
+  `certbot-dns-ionos` plugin requires: `dns_ionos_prefix`, `dns_ionos_secret`
+  and `dns_ionos_endpoint` (https://api.hosting.ionos.com). The old
+  `dns_ionos_api_key` / `dns_ionos_api_secret` keys were dropped upstream and
+  certbot aborted with "Missing properties in credentials configuration file".
+  The stored credentials are unchanged — `ionos/api-key` is the public prefix,
+  `ionos/api-secret` is the secret. The endpoint can be overridden with
+  `IONOS_API_ENDPOINT`.
+
 ## [2.3.1] — 2026-06-09
 
 ### Fixed

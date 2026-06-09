@@ -141,10 +141,17 @@ function __easy_command_proxy {
    return 1
   fi
 
-  # Create credentials file in container
+  # IONOS Remote API endpoint — standard value covers all accounts; overridable.
+  local ionos_endpoint="${IONOS_API_ENDPOINT:-https://api.hosting.ionos.com}"
+
+  # Create credentials file in container. The certbot-dns-ionos plugin expects
+  # prefix/secret/endpoint keys (the IONOS API key is "<prefix>.<secret>", so the
+  # stored api-key is the public prefix and api-secret is the secret). The older
+  # dns_ionos_api_key / dns_ionos_api_secret keys were dropped upstream.
   docker exec "${EASY_PROXY_NAME}" /bin/sh -c "cat > /etc/letsencrypt/ionos.ini <<'EOF'
-dns_ionos_api_key = ${api_key}
-dns_ionos_api_secret = ${api_secret}
+dns_ionos_prefix = ${api_key}
+dns_ionos_secret = ${api_secret}
+dns_ionos_endpoint = ${ionos_endpoint}
 EOF
 chmod 600 /etc/letsencrypt/ionos.ini"
 
