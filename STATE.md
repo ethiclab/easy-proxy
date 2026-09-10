@@ -1,7 +1,10 @@
 # easy-proxy — STATE.md
 
 > Stato attuale e blocchi del progetto
-> Aggiornato: 2026-06-09
+> Aggiornato: 2026-09-10
+>
+> Qui solo lo stato dello **strumento**. Lo stato delle installazioni (host, siti,
+> certificati, decisioni operative) sta nel repo ops privato di chi le gestisce.
 
 ---
 
@@ -21,8 +24,6 @@
 
 | Task | Stato | Note |
 |------|-------|------|
-| **Deploy fix certbot su ethicserver** | 🟡 IN CORSO | CLI aggiornata a 2.3.2; resta da ricreare il container + cert IONOS. Vedi [SERVER_RUNBOOK.md](SERVER_RUNBOOK.md) |
-| **Cert IONOS wildcard auto-rinnovabile** | 🟡 PENDING | `easy proxy certbot-ionos ethiclab.it` dopo il recreate del container |
 | **Rilascio npm su registry** | 🟡 PENDING | `npm publish` — serve `npm login` sullo scope `@ethiclab` (in prod si usa l'install da git tag) |
 
 ---
@@ -31,25 +32,27 @@
 
 | Blocco | Gravità | Next step |
 |--------|---------|-----------|
-| **`certbot/certbot:latest` deriva i flag/config certbot** | 🟡 RICORRENTE | Valutare il pin dell'immagine a un tag fisso invece di `:latest` per fermare la deriva della CLI ai rebuild |
-| **`rfc2136` rotto su ethicserver** | 🟢 SERVER-SIDE | `/etc/letsencrypt/secret.txt`: `dns_rfc2136_server` deve essere un IP, non un hostname; `chmod 600`. Non è un bug del repo |
+| **`certbot/certbot:latest` deriva i flag/config certbot** | 🟡 RICORRENTE | Valutare il pin dell'immagine a un tag fisso invece di `:latest` |
 
 Nessun blocco tecnico aperto nel repo.
 
 ---
 
-## Fatto in questa fase (sessione 2026-06-09)
+## Fatto in questa fase
 
-Fix degli errori certbot emersi su `ethicserver` (certbot moderno + reinstall CLI):
+### Sessione 2026-09-10 (operativa, lezioni riportate nello strumento)
+
+- Rinnovo automatico verificato in produzione: deploy hook + timer systemd (documentati in [SERVER_RUNBOOK.md](SERVER_RUNBOOK.md)).
+- Dominio con DNS senza plugin certbot convertito da DNS-01 manuale a HTTP-01 webroot sullo stesso lineage.
+- [SERVER_RUNBOOK.md](SERVER_RUNBOOK.md) reso generico: layout host, scelta della challenge per provider DNS, HTTP-01, rinnovo, collegamento degli stack alla rete edge.
+- Knowledge base: lezioni su template (niente WebSocket/ACME), alias Compose sulla rete edge, `-f` che ignora l'override, versioning di `EASY_DOMAINS_DIR` sì / `EASY_LETSENCRYPT_DIR` no; corretta la decisione sul wildcard (`certbot-dns-ionos` non segue i CNAME).
+
+### Sessione 2026-06-09
 
 | PR | Versione | Cosa |
 |----|----------|------|
 | #35 | 2.3.1 | Flag certbot: rimosso `--manual-public-ip-logging-ok`, `--dns-ionos` → `--authenticator dns-ionos` |
 | #36 | 2.3.2 | `ionos.ini` nel formato del plugin attuale (`dns_ionos_prefix`/`secret`/`endpoint`) |
-
-- Aggiunto [SERVER_RUNBOOK.md](SERVER_RUNBOOK.md): recovery del proxy dopo upgrade CLI.
-- Knowledge base aggiornata con due gotcha: deriva flag di `certbot:latest`; `npm install -g` a container attivo rompe il bind mount di `easyhome` (causa del fallimento di `reload`).
-- Suite bats: 55/55. Tag `v2.3.2` pushato.
 
 ### Storico precedente (sessione 2026-05-17/18)
 
@@ -62,11 +65,13 @@ self-contained. PR #28–#34: `verify`/`recover`/`doctor`/`networks`,
 
 ## Prossimi step
 
-1. **Completare il deploy su ethicserver** — [SERVER_RUNBOOK.md](SERVER_RUNBOOK.md): recreate container + `certbot-ionos`
-2. **Pin immagine certbot** a un tag fisso (evita deriva CLI ai rebuild)
-3. **`npm publish`** — pubblicare `@ethiclab/easy-cli` sul registry (azione manuale, `npm login`)
-4. **`easy proxy renew`** — comando di auto-rinnovo certificati (roadmap)
-5. **Split-view DNS** con dnsmasq (UC1 Phase 2)
+1. **Template con supporto WebSocket e ACME HTTP-01** (flag su `easy proxy new`, o include di `common.conf` in `nginx.conf`) — oggi i vhost reali si scrivono a mano
+2. **`easy proxy renew`** — sostituirebbe il `docker exec ... certbot renew` nel timer, con stato per singolo lineage
+3. **`easy proxy certbot-webroot <domain>`** — HTTP-01 per i DNS senza plugin
+4. **`doctor`**: segnalare `proxy_pass` con hostname letterale; non segnalare `upstream` su IP; segnalare cert in `live/` senza `renewal/`
+5. **Pin immagine certbot** a un tag fisso
+6. **`ionos-config-helper.sh`** — allineare al formato prefix/secret/endpoint (oggi codice morto con le chiavi vecchie)
+7. **`npm publish`** di `@ethiclab/easy-cli`
 
 ---
 
