@@ -2,14 +2,14 @@
 
 > Nginx reverse proxy CLI con Let's Encrypt SSL automation e multi-DNS provider.
 > Stato: **ATTIVO** — v2.3.2
-> Ultimo aggiornamento: 2026-06-09
+> Ultimo aggiornamento: 2026-09-10
 
 ---
 
 ## 0. Primo passo obbligatorio
 
 ```bash
-cd ~/ethiclab/lab/easy-proxy
+cd ~/ethiclab/easy-proxy
 cat STATE.md                    # stato WIP e blocchi attivi
 easy proxy status               # container running?
 ```
@@ -92,16 +92,16 @@ hanno una direttiva `# shellcheck disable=` baselined (vedi issue #8 per la puli
 ### Installazione
 
 ```bash
-cd ~/ethiclab/lab/easy-proxy
+cd ~/ethiclab/easy-proxy
 npm install -g .           # installa 'easy' nel PATH
 # oppure usa path diretto:
-export PATH="$HOME/ethiclab/lab/easy-proxy:$PATH"
+export PATH="$HOME/ethiclab/easy-proxy:$PATH"
 ```
 
 ### Environment variables (obbligatorie)
 
 ```bash
-export EASY_DIR="$HOME/ethiclab/lab/easy-proxy"
+export EASY_DIR="$HOME/ethiclab/easy-proxy"
 export EASY_LETSENCRYPT_DIR="$HOME/.easy-proxy/letsencrypt"
 export EASY_DOMAINS_DIR="$HOME/.easy-proxy/domains"
 export EASY_LETSENCRYPT_EMAIL="admin@ethiclab.it"
@@ -229,7 +229,7 @@ Eseguita anche dal hook `.husky/pre-push` e dalla CI.
 ### Test manuale end-to-end (richiede Docker)
 
 ```bash
-cd ~/ethiclab/lab/easy-proxy
+cd ~/ethiclab/easy-proxy
 export EASY_DIR="$PWD"
 export EASY_LETSENCRYPT_DIR="$HOME/.easy-proxy/letsencrypt"
 export EASY_DOMAINS_DIR="$HOME/.easy-proxy/domains"
@@ -338,6 +338,7 @@ Principali:
 - **ENTRYPOINT []** resettato nel Dockerfile — altrimenti CMD viene passato come arg a certbot
 - **pass CLI** per credenziali — sicurezza > comodità env vars
 - **Container identificato per nome fisso** (`easy-proxy`), non da un file di stato `.id` — Docker è l'unica fonte di verità. Il vecchio `.id` veniva scritto nella install dir, root-owned dopo `npm install -g` → permission denied (issue #5)
+- **Repo pubblico = solo lo strumento** — qui (docs, `STATE.md`, `.beads/knowledge/`) va solo conoscenza generica, riscritta senza hostname, IP, nomi di container/siti, percorsi host o dettagli di sicurezza. Stato e lezioni di una specifica installazione vanno nel suo repo ops privato (es. `<org>/<host>-ops`). Prima di ogni commit: `git diff | grep -iE '<host>|<ip>|/home/'`
 
 ---
 

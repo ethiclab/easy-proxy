@@ -12,7 +12,7 @@
 
 1. **easy-proxy running locally**
    ```bash
-   cd ~/ethiclab/lab/easy-proxy
+   cd ~/ethiclab/easy-proxy
    export EASY_LETSENCRYPT_DIR=~/.easy-proxy/letsencrypt
    export EASY_DOMAINS_DIR=~/.easy-proxy/domains
    export EASY_LETSENCRYPT_EMAIL=admin@ethiclab.it
@@ -61,7 +61,7 @@ export IONOS_API_SECRET="your-api-secret"
 **Generate wildcard cert for dev subdomain** (e.g., `dev.ethiclab.it`):
 
 ```bash
-cd ~/ethiclab/lab/easy-proxy
+cd ~/ethiclab/easy-proxy
 
 export EASY_LETSENCRYPT_EMAIL=admin@ethiclab.it
 export IONOS_API_KEY="$(pass ionos/api-key)"      # or set directly
@@ -212,7 +212,7 @@ Add to browser trust, or use `curl -k` (insecure mode) for testing.
 
 **Check**: Version >= 2.0.0
 ```bash
-cd ~/ethiclab/lab/easy-proxy && npm list | head -1
+cd ~/ethiclab/easy-proxy && npm list | head -1
 # Should show "@ethiclab/easy-cli@2.0.0"
 ```
 

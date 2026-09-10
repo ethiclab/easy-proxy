@@ -87,7 +87,7 @@ I template in `easyhome/templates/` usano variabili bash-style:
 ### Testare senza credenziali IONOS
 
 ```bash
-export EASY_DIR="$HOME/ethiclab/lab/easy-proxy"
+export EASY_DIR="$HOME/ethiclab/easy-proxy"
 export EASY_LETSENCRYPT_DIR="$HOME/.easy-proxy/letsencrypt"
 export EASY_DOMAINS_DIR="$HOME/.easy-proxy/domains"
 export EASY_LETSENCRYPT_EMAIL="test@ethiclab.it"
