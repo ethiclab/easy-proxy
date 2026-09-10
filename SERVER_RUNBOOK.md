@@ -161,8 +161,31 @@ certbot, copied files) have no `renewal/` entry and **never renew** — list
 systemctl list-timers easy-proxy-certbot-renew.timer --all        # NEXT has a date
 systemctl start easy-proxy-certbot-renew.service
 systemctl status easy-proxy-certbot-renew.service --no-pager      # status=0/SUCCESS
-docker exec easy-proxy certbot renew --dry-run                    # exit 0, all lineages
+docker exec easy-proxy certbot renew --dry-run --no-random-sleep-on-renew   # exit 0, all lineages
 docker exec easy-proxy sh -c 'ls /etc/letsencrypt/live; ls /etc/letsencrypt/renewal'
+```
+
+Without a TTY, `certbot renew` sleeps a random 0–8 minutes before working. That's
+fine in the timer, but pass `--no-random-sleep-on-renew` when checking by hand.
+
+### Adopting a certificate issued elsewhere
+
+A cert copied into `archive/` by hand, or issued by another certbot, has no
+`renewal/` entry. To bring it under this container, move `live/<name>` and
+`archive/<name>` aside (keep them until the new one has renewed once), then issue
+with the same `--cert-name`, so vhost paths don't change. If the zone belongs to a
+**different DNS account**, give it its own credentials file (e.g.
+`/etc/letsencrypt/<domain>.ini`, `0600`) and call certbot directly with
+`--authenticator dns-ionos --dns-ionos-credentials /etc/letsencrypt/<domain>.ini`.
+Don't use `easy proxy certbot-ionos` for it: that command always rewrites and uses
+the single `ionos.ini`. Test first with `--dry-run` under a throwaway `--cert-name`:
+a dry run saves nothing.
+
+Check permissions after any manual copy: nothing below should print.
+
+```bash
+find "$EASY_LETSENCRYPT_DIR" \( -name '*.ini' -o -name secret.txt -o -name 'privkey*.pem' \
+  -o -name private_key.json -o -path '*/keys/*.pem' \) -perm /044
 ```
 
 ---
